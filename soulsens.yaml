@@ -1,0 +1,474 @@
+script:
+  tuya_send:
+    mode: queued
+    alias: "Tuya Send"
+    sequence:
+      - service: mqtt.publish
+        data_template:
+          topic: "cmnd/{{ topic }}/SerialSend5"
+          retain: true
+          payload_template: >
+            {% set dplen = ((dpdata|length)/2) | int %}
+            {% set clen = (4 + dplen) %}
+            {% set sdu = ('%02X' % dpid) ~ ('%02X' % dptype) ~ ('%04x' % dplen) ~ dpdata %}
+            {% set cdata = '55AA0006' ~ ('%04x' % clen) ~ sdu %}
+            {% set checksum = namespace(value=0) %}
+            {% for n in range(0,(cdata|length),2) %}
+              {%- set checksum.value = checksum.value + ('0x' ~ cdata[n:n+2]) | int(base=16) -%}
+            {% endfor %} 
+            {% set chk = '%02X' % (checksum.value % 256) %}
+            {{ cdata ~ chk }}
+
+sensor:
+  - platform: mqtt
+    name: soulsens_dpid103
+    unique_id: soulsens_dpid103
+    state_topic: soulsens/light
+    availability_topic: tele/your_topic/LWT
+    payload_available: Online
+    payload_not_available: Offline
+  - platform: mqtt
+    name: soulsens_dpid104
+    unique_id: soulsens_dpid104
+    state_topic: soulsens/sound
+    availability_topic: tele/your_topic/LWT
+    payload_available: Online
+    payload_not_available: Offline
+
+light:
+  - platform: template
+    lights:
+      soulsens_nl_white:
+        friendly_name: "Soulsens NL White"
+        value_template: >
+          {% set val1 = ('0x' ~ states('sensor.soulsens_dpid103')[0:2]) | int(base=16) %}
+          {% set val2 = ('0x' ~ states('sensor.soulsens_dpid103')[2:4]) | int(base=16) %}
+          {% set val3 = val1 + val2 %}
+          {% if val3 == 2 %}
+            ON
+          {% else %}
+            OFF
+          {% endif %}
+        level_template: >
+          {% set value = ('0x' ~ states('sensor.soulsens_dpid103')[4:6]) | int(base=16) %}
+          {{ ((value|float)*255/20) | int }}
+        temperature_template: >
+          {% set value = ('0x' ~ states('sensor.soulsens_dpid103')[6:8]) | int(base=16) %}
+          {{ (50000 - 347*(value | float)) // 100 }}
+        turn_on:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 103
+            dptype: 0
+            dpdata: >
+              {% set B00 = '01' %}
+              {% set B01 = '01' %}
+              {% set B02 = states('sensor.soulsens_dpid103')[4:6] %}
+              {% set B03 = states('sensor.soulsens_dpid103')[6:8] %}
+              {% set B04 = '00' %}
+              {% set B05 = states('sensor.soulsens_dpid103')[10:12] %}
+              {% set B06 = states('sensor.soulsens_dpid103')[12:14] %}
+              {% set B07 = states('sensor.soulsens_dpid103')[14:16] %}
+              {% set B08 = '00' %}
+              {% set B09 = states('sensor.soulsens_dpid103')[18:20] %}
+              {% set B10 = states('sensor.soulsens_dpid103')[20:22] %}
+              {{ B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10 }}
+        turn_off: # if the white light is "turned off" we will switch modes to the white light and turn off
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 103
+            dptype: 0
+            dpdata: >
+              {% set B00 = '00' %}
+              {% set B01 = '01' %}
+              {% set B02 = states('sensor.soulsens_dpid103')[4:6] %}
+              {% set B03 = states('sensor.soulsens_dpid103')[6:8] %}
+              {% set B04 = '00' %}
+              {% set B05 = states('sensor.soulsens_dpid103')[10:12] %}
+              {% set B06 = states('sensor.soulsens_dpid103')[12:14] %}
+              {% set B07 = states('sensor.soulsens_dpid103')[14:16] %}
+              {% set B08 = '00' %}
+              {% set B09 = states('sensor.soulsens_dpid103')[18:20] %}
+              {% set B10 = states('sensor.soulsens_dpid103')[20:22] %}
+              {{ B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10 }}
+        set_level:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 103
+            dptype: 0
+            dpdata: >
+              {% set B00 = states('sensor.soulsens_dpid103')[0:2] %}
+              {% set B01 = states('sensor.soulsens_dpid103')[2:4] %}
+              {% set B02 = "%02x" % max(1,(((brightness|float)*20/255) | int)) %}
+              {% set B03 = states('sensor.soulsens_dpid103')[6:8] %}
+              {% set B04 = states('sensor.soulsens_dpid103')[8:10] %}
+              {% set B05 = states('sensor.soulsens_dpid103')[10:12] %}
+              {% set B06 = states('sensor.soulsens_dpid103')[12:14] %}
+              {% set B07 = states('sensor.soulsens_dpid103')[14:16] %}
+              {% set B08 = states('sensor.soulsens_dpid103')[16:18] %}
+              {% set B09 = states('sensor.soulsens_dpid103')[18:20] %}
+              {% set B10 = states('sensor.soulsens_dpid103')[20:22] %}
+              {{ B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10 }}
+        set_temperature:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 103
+            dptype: 0
+            dpdata: >
+              {% set B00 = states('sensor.soulsens_dpid103')[0:2] %}
+              {% set B01 = states('sensor.soulsens_dpid103')[2:4] %}
+              {% set B02 = states('sensor.soulsens_dpid103')[4:6] %}
+              {% set B03 = "%02x" % (((500 - (color_temp|float))*100/347) | int) %}
+              {% set B04 = states('sensor.soulsens_dpid103')[8:10] %}
+              {% set B05 = states('sensor.soulsens_dpid103')[10:12] %}
+              {% set B06 = states('sensor.soulsens_dpid103')[12:14] %}
+              {% set B07 = states('sensor.soulsens_dpid103')[14:16] %}
+              {% set B08 = states('sensor.soulsens_dpid103')[16:18] %}
+              {% set B09 = states('sensor.soulsens_dpid103')[18:20] %}
+              {% set B10 = states('sensor.soulsens_dpid103')[20:22] %}
+              {{ B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10 }}
+
+      soulsens_nl_color:
+        friendly_name: "Soulsens NL Color"
+        value_template: >
+          {% set val1 = ('0x' ~ states('sensor.soulsens_dpid103')[0:2]) | int(base=16) %}
+          {% set val2 = ('0x' ~ states('sensor.soulsens_dpid103')[8:10]) | int(base=16) %}
+          {% set val3 = val1 + val2 %}
+          {% if val3 == 2 %}
+            ON
+          {% else %}
+            OFF
+          {% endif %}
+        level_template: >
+          {% set value = ('0x' ~ states('sensor.soulsens_dpid103')[10:12]) | int(base=16) %}
+          {{ ((value|float)*255/20) | int }}
+        color_template: >
+          {% set value = ('0x' ~ states('sensor.soulsens_dpid103')[12:14] ~ states('sensor.soulsens_dpid103')[14:16]) | int(base=16) %}
+          {{ value }},100
+        turn_on:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 103
+            dptype: 0
+            dpdata: >
+              {% set B00 = '01' %}
+              {% set B01 = '00' %}
+              {% set B02 = states('sensor.soulsens_dpid103')[4:6] %}
+              {% set B03 = states('sensor.soulsens_dpid103')[6:8] %}
+              {% set B04 = '01' %}
+              {% set B05 = states('sensor.soulsens_dpid103')[10:12] %}
+              {% set B06 = states('sensor.soulsens_dpid103')[12:14] %}
+              {% set B07 = states('sensor.soulsens_dpid103')[14:16] %}
+              {% set B08 = '00' %}
+              {% set B09 = states('sensor.soulsens_dpid103')[18:20] %}
+              {% set B10 = states('sensor.soulsens_dpid103')[20:22] %}
+              {{ B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10 }}
+        turn_off:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 103
+            dptype: 0
+            dpdata: >
+              {% set B00 = '00' %}
+              {% set B01 = '00' %}
+              {% set B02 = states('sensor.soulsens_dpid103')[4:6] %}
+              {% set B03 = states('sensor.soulsens_dpid103')[6:8] %}
+              {% set B04 = '01' %}
+              {% set B05 = states('sensor.soulsens_dpid103')[10:12] %}
+              {% set B06 = states('sensor.soulsens_dpid103')[12:14] %}
+              {% set B07 = states('sensor.soulsens_dpid103')[14:16] %}
+              {% set B08 = '00' %}
+              {% set B09 = states('sensor.soulsens_dpid103')[18:20] %}
+              {% set B10 = states('sensor.soulsens_dpid103')[20:22] %}
+              {{ B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10 }}
+        set_level:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 103
+            dptype: 0
+            dpdata: >
+              {% set B00 = states('sensor.soulsens_dpid103')[0:2] %}
+              {% set B01 = states('sensor.soulsens_dpid103')[2:4] %}
+              {% set B02 = states('sensor.soulsens_dpid103')[4:6] %}
+              {% set B03 = states('sensor.soulsens_dpid103')[6:8] %}
+              {% set B04 = states('sensor.soulsens_dpid103')[8:10] %}
+              {% set B05 = "%02x" % max(1,(((brightness|float)*20/255) | int)) %}
+              {% set B06 = states('sensor.soulsens_dpid103')[12:14] %}
+              {% set B07 = states('sensor.soulsens_dpid103')[14:16] %}
+              {% set B08 = states('sensor.soulsens_dpid103')[16:18] %}
+              {% set B09 = states('sensor.soulsens_dpid103')[18:20] %}
+              {% set B10 = states('sensor.soulsens_dpid103')[20:22] %}
+              {{ B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10 }}
+        set_color:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 103
+            dptype: 0
+            dpdata: >
+              {% set B00 = states('sensor.soulsens_dpid103')[0:2] %}
+              {% set B01 = states('sensor.soulsens_dpid103')[2:4] %}
+              {% set B02 = states('sensor.soulsens_dpid103')[4:6] %}
+              {% set B03 = states('sensor.soulsens_dpid103')[6:8] %}
+              {% set B04 = states('sensor.soulsens_dpid103')[8:10] %}
+              {% set B05 = states('sensor.soulsens_dpid103')[10:12] %}
+              {% set B06 = ("%04x" % (h|int))[0:2] %}
+              {% set B07 = ("%04x" % (h|int))[2:4] %}
+              {% set B08 = states('sensor.soulsens_dpid103')[16:18] %}
+              {% set B09 = states('sensor.soulsens_dpid103')[18:20] %}
+              {% set B10 = states('sensor.soulsens_dpid103')[20:22] %}
+              {{ B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10 }}
+      soulsens_nl_effect:
+        friendly_name: "Soulsens NL Effect"
+        value_template: >
+          {% set val1 = ('0x' ~ states('sensor.soulsens_dpid103')[0:2]) | int(base=16) %}
+          {% set val2 = ('0x' ~ states('sensor.soulsens_dpid103')[16:18]) | int(base=16) %}
+          {% set val3 = val1 + val2 %}
+          {% if val3 == 2 %}
+            ON
+          {% else %}
+            OFF
+          {% endif %}
+        level_template: >
+          {% set value = ('0x' ~ states('sensor.soulsens_dpid103')[18:20]) | int(base=16) %}
+          {{ ((value|float)*255/20) | int }}
+        effect_list_template: >
+          {{ "['Breathe','Leap','Sunset','Candle']" }}
+        effect_template: >
+          {% set value = ('0x' ~ states('sensor.soulsens_dpid103')[20:22]) | int(base=16) %}
+          {% if value == 1 %}
+            Breathe
+          {% elif value == 2 %}
+            Leap
+          {% elif value == 3 %}
+            Sunset
+          {% elif value == 4 %}
+            Candle
+          {% endif %}
+        turn_on:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 103
+            dptype: 0
+            dpdata: >
+              {% set B00 = '01' %}
+              {% set B01 = '00' %}
+              {% set B02 = states('sensor.soulsens_dpid103')[4:6] %}
+              {% set B03 = states('sensor.soulsens_dpid103')[6:8] %}
+              {% set B04 = '00' %}
+              {% set B05 = states('sensor.soulsens_dpid103')[10:12] %}
+              {% set B06 = states('sensor.soulsens_dpid103')[12:14] %}
+              {% set B07 = states('sensor.soulsens_dpid103')[14:16] %}
+              {% set B08 = '01' %}
+              {% set B09 = states('sensor.soulsens_dpid103')[18:20] %}
+              {% set B10 = states('sensor.soulsens_dpid103')[20:22] %}
+              {{ B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10 }}
+        turn_off:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 103
+            dptype: 0
+            dpdata: >
+              {% set B00 = '00' %}
+              {% set B01 = '00' %}
+              {% set B02 = states('sensor.soulsens_dpid103')[4:6] %}
+              {% set B03 = states('sensor.soulsens_dpid103')[6:8] %}
+              {% set B04 = '00' %}
+              {% set B05 = states('sensor.soulsens_dpid103')[10:12] %}
+              {% set B06 = states('sensor.soulsens_dpid103')[12:14] %}
+              {% set B07 = states('sensor.soulsens_dpid103')[14:16] %}
+              {% set B08 = '01' %}
+              {% set B09 = states('sensor.soulsens_dpid103')[18:20] %}
+              {% set B10 = states('sensor.soulsens_dpid103')[20:22] %}
+              {{ B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10 }}
+        set_level:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 103
+            dptype: 0
+            dpdata: >
+              {% set B00 = states('sensor.soulsens_dpid103')[0:2] %}
+              {% set B01 = states('sensor.soulsens_dpid103')[2:4] %}
+              {% set B02 = states('sensor.soulsens_dpid103')[4:6] %}
+              {% set B03 = states('sensor.soulsens_dpid103')[6:8] %}
+              {% set B04 = states('sensor.soulsens_dpid103')[8:10] %}
+              {% set B05 = states('sensor.soulsens_dpid103')[10:12] %}
+              {% set B06 = states('sensor.soulsens_dpid103')[12:14] %}
+              {% set B07 = states('sensor.soulsens_dpid103')[14:16] %}
+              {% set B08 = states('sensor.soulsens_dpid103')[16:18] %}
+              {% set B09 = "%02x" % max(1,(((brightness|float)*20/255) | int)) %}
+              {% set B10 = states('sensor.soulsens_dpid103')[20:22] %}
+              {{ B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10 }}
+        set_effect:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 103
+            dptype: 0
+            dpdata: >
+              {% if effect == 'Breathe' %}
+                {% set effect_val = '01' %}
+              {% elif effect == 'Leap' %}
+                {% set effect_val = '02' %}
+              {% elif effect == 'Sunset' %}
+                {% set effect_val = '03' %}
+              {% elif effect == 'Candle' %}
+                {% set effect_val = '04' %}
+              {% endif %}
+              {% set B00 = states('sensor.soulsens_dpid103')[0:2] %}
+              {% set B01 = states('sensor.soulsens_dpid103')[2:4] %}
+              {% set B02 = states('sensor.soulsens_dpid103')[4:6] %}
+              {% set B03 = states('sensor.soulsens_dpid103')[6:8] %}
+              {% set B04 = states('sensor.soulsens_dpid103')[8:10] %}
+              {% set B05 = states('sensor.soulsens_dpid103')[10:12] %}
+              {% set B06 = states('sensor.soulsens_dpid103')[12:14] %}
+              {% set B07 = states('sensor.soulsens_dpid103')[14:16] %}
+              {% set B08 = states('sensor.soulsens_dpid103')[16:18] %}
+              {% set B09 = states('sensor.soulsens_dpid103')[18:20] %}
+              {% set B10 = effect_val %}
+              {{ B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10 }}
+
+      soulsens_sound:
+        friendly_name: "Soulsens Sound"
+        value_template: >
+          {% set val1 = ('0x' ~ states('sensor.soulsens_dpid104')[0:2]) | int(base=16) %}
+          {% if val1 == 1 %}
+            ON
+          {% else %}
+            OFF
+          {% endif %}
+        level_template: >
+          {% set value = ('0x' ~ states('sensor.soulsens_dpid104')[4:6]) | int(base=16) %}
+          {{ ((value|float)*255/15) | int }}
+        effect_list_template: >
+          {{ "['Ocean', 'Thunder', 'Rain', 'Stream','Rainforest','Wind','Deep space','Bird','Cricket','Whale','White Noise', 'Pink Noise','Fan','Hairdryer','Lullaby','Piano','Wind Chimes']" }}
+        effect_template: >
+          {% set value = ('0x' ~ states('sensor.soulsens_dpid104')[2:4]) | int(base=16) %}
+          {% if value == 1 %}
+            Ocean
+          {% elif value == 2 %}
+            Thunder
+          {% elif value == 3 %}
+            Rain
+          {% elif value == 4 %}
+            Stream
+          {% elif value == 5 %}
+            Rainforest
+          {% elif value == 6 %}
+            Wind
+          {% elif value == 7 %}
+            Deep space
+          {% elif value == 8 %}
+            Bird
+          {% elif value == 9 %}
+            Cricket
+          {% elif value == 10 %}
+            Whale
+          {% elif value == 11 %}
+            White Noise
+          {% elif value == 12 %}
+            Pink Noise
+          {% elif value == 13 %}
+            Fan
+          {% elif value == 14 %}
+            Hairdryer
+          {% elif value == 15 %}
+            Lullaby
+          {% elif value == 16 %}
+            Piano
+          {% elif value == 17 %}
+            Wind Chimes
+          {% endif %}
+        turn_on:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 104
+            dptype: 0
+            dpdata: >
+              {% set B00 = '01' %}
+              {% set B01 = states('sensor.soulsens_dpid104')[2:4] %}
+              {% set B02 = states('sensor.soulsens_dpid104')[4:6] %}
+              {% set B03 = states('sensor.soulsens_dpid104')[6:8] %}
+              {{ B00~B01~B02~B03 }}
+        turn_off:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 104
+            dptype: 0
+            dpdata: >
+              {% set B00 = '00' %}
+              {% set B01 = states('sensor.soulsens_dpid104')[2:4] %}
+              {% set B02 = states('sensor.soulsens_dpid104')[4:6] %}
+              {% set B03 = states('sensor.soulsens_dpid104')[6:8] %}
+              {{ B00~B01~B02~B03 }}
+        set_level:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 104
+            dptype: 0
+            dpdata: >
+              {% set B00 = states('sensor.soulsens_dpid104')[0:2] %}
+              {% set B01 = states('sensor.soulsens_dpid104')[2:4] %}
+              {% set B02 = "%02x" % max(1, (((brightness|float)*15/255) | int)) %}
+              {% set B03 = states('sensor.soulsens_dpid104')[6:8] %}
+              {{ B00~B01~B02~B03 }}
+        set_effect:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 104
+            dptype: 0
+            dpdata: >
+              {% if effect == 'Ocean' %}
+                {% set effect_val = '01' %}
+              {% elif effect == 'Thunder' %}
+                {% set effect_val = '02' %}
+              {% elif effect == 'Rain' %}
+                {% set effect_val = '03' %}
+              {% elif effect == 'Stream' %}
+                {% set effect_val = '04' %}
+              {% elif effect == 'Rainforest' %}
+                {% set effect_val = '05' %}
+              {% elif effect == 'Wind' %}
+                {% set effect_val = '06' %}
+              {% elif effect == 'Deep space' %}
+                {% set effect_val = '07' %}
+              {% elif effect == 'Bird' %}
+                {% set effect_val = '08' %}
+              {% elif effect == 'Cricket' %}
+                {% set effect_val = '09' %}
+              {% elif effect == 'Whale' %}
+                {% set effect_val = '0A' %}
+              {% elif effect == 'White Noise' %}
+                {% set effect_val = '0B' %}
+              {% elif effect == 'Pink Noise' %}
+                {% set effect_val = '0C' %}
+              {% elif effect == 'Fan' %}
+                {% set effect_val = '0D' %}
+              {% elif effect == 'Hairdryer' %}
+                {% set effect_val = '0E' %}
+              {% elif effect == 'Lullaby' %}
+                {% set effect_val = '0F' %}
+              {% elif effect == 'Piano' %}
+                {% set effect_val = '10' %}
+              {% elif effect == 'Wind Chimes' %}
+                {% set effect_val = '11' %}
+              {% endif %}
+              {% set B00 = states('sensor.soulsens_dpid104')[0:2] %}
+              {% set B01 = effect_val %}
+              {% set B02 = states('sensor.soulsens_dpid104')[4:6] %}
+              {% set B03 = states('sensor.soulsens_dpid104')[6:8] %}
+              {{ B00~B01~B02~B03 }}

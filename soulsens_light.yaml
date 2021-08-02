@@ -1,0 +1,516 @@
+sensor:
+  - platform: mqtt
+    name: soulsens_dpid103
+    unique_id: soulsens_dpid103
+    state_topic: soulsens/light
+    availability_topic: tele/your_tasmota_topic/LWT
+    payload_available: Online
+    payload_not_available: Offline
+  - platform: template
+    sensors:
+      soulsens_dpid103_00:
+        value_template: >
+          {{ states('sensor.soulsens_dpid103')[0:2] }}
+      soulsens_dpid103_01:
+        value_template: >
+          {{ states('sensor.soulsens_dpid103')[2:4] }}
+      soulsens_dpid103_02:
+        value_template: >
+          {{ states('sensor.soulsens_dpid103')[4:6] }}
+      soulsens_dpid103_03:
+        value_template: >
+          {{ states('sensor.soulsens_dpid103')[6:8] }}
+      soulsens_dpid103_04:
+        value_template: >
+          {{ states('sensor.soulsens_dpid103')[8:10] }}
+      soulsens_dpid103_05:
+        value_template: >
+          {{ states('sensor.soulsens_dpid103')[10:12] }}
+      soulsens_dpid103_06:
+        value_template: >
+          {{ states('sensor.soulsens_dpid103')[12:14] }}
+      soulsens_dpid103_07:
+        value_template: >
+          {{ states('sensor.soulsens_dpid103')[14:16] }}
+      soulsens_dpid103_08:
+        value_template: >
+          {{ states('sensor.soulsens_dpid103')[16:18] }}
+      soulsens_dpid103_09:
+        value_template: >
+          {{ states('sensor.soulsens_dpid103')[18:20] }}
+      soulsens_dpid103_10:
+        value_template: >
+          {{ states('sensor.soulsens_dpid103')[20:22] }}
+
+light:
+  - platform: template
+    lights:
+      soulsens_nl_white:
+        friendly_name: "Soulsens NL White"
+        value_template: >
+          {% set val1 = ('0x' ~ states('sensor.soulsens_dpid103_00')) | int(base=16) %}
+          {% set val2 = ('0x' ~ states('sensor.soulsens_dpid103_01')) | int(base=16) %}
+          {% set val3 = val1 + val2 %}
+          {% if val3 == 2 %}
+            ON
+          {% else %}
+            OFF
+          {% endif %}
+        level_template: >
+          {% set value = ('0x' ~ states('sensor.soulsens_dpid103_02')) | int(base=16) %}
+          {{ ((value|float)*255/20) | int }}
+        temperature_template: >
+          {% set value = ('0x' ~ states('sensor.soulsens_dpid103_03')) | int(base=16) %}
+          {{ (50000 - 347*(value | float)) // 100 }}
+        turn_on:
+          service: mqtt.publish
+          data:
+            topic: cmnd/your_tasmota_topic/SerialSend5
+            retain: true
+            payload_template: >
+              {% set PRE = "55AA0006000F6700000B" %}
+              {% set B00 = '01' %}
+              {% set B01 = '01' %}
+              {% set B02 = states('sensor.soulsens_dpid103_02') %}
+              {% set B03 = states('sensor.soulsens_dpid103_03') %}
+              {% set B04 = '00' %}
+              {% set B05 = states('sensor.soulsens_dpid103_05') %}
+              {% set B06 = states('sensor.soulsens_dpid103_06') %}
+              {% set B07 = states('sensor.soulsens_dpid103_07') %}
+              {% set B08 = '00' %}
+              {% set B09 = states('sensor.soulsens_dpid103_09') %}
+              {% set B10 = states('sensor.soulsens_dpid103_10') %}
+              {% set PREi = 390 %}
+              {% set B00i = ('0x' ~ B00) | int(base=16) %}
+              {% set B01i = ('0x' ~ B01) | int(base=16) %}
+              {% set B02i = ('0x' ~ B02) | int(base=16) %}
+              {% set B03i = ('0x' ~ B03) | int(base=16) %}
+              {% set B04i = ('0x' ~ B04) | int(base=16) %}
+              {% set B05i = ('0x' ~ B05) | int(base=16) %}
+              {% set B06i = ('0x' ~ B06) | int(base=16) %}
+              {% set B07i = ('0x' ~ B07) | int(base=16) %}
+              {% set B08i = ('0x' ~ B08) | int(base=16) %}
+              {% set B09i = ('0x' ~ B09) | int(base=16) %}
+              {% set B10i = ('0x' ~ B10) | int(base=16) %}
+              {% set CHKi = (PREi+B00i+B01i+B02i+B03i+B04i+B05i+B06i+B07i+B08i+B09i+B10i) % 256 %}
+              {% set CHK = "%02x" % CHKi %}
+              {{ PRE~B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10~CHK }}
+        turn_off: # if the white light is "turned off" we will switch modes to the white light and turn off
+          service: mqtt.publish
+          data:
+            topic: cmnd/your_tasmota_topic/SerialSend5
+            retain: true
+            payload_template: >
+              {% set PRE = "55AA0006000F6700000B" %}
+              {% set B00 = '00' %}
+              {% set B01 = '01' %}
+              {% set B02 = states('sensor.soulsens_dpid103_02') %}
+              {% set B03 = states('sensor.soulsens_dpid103_03') %}
+              {% set B04 = '00' %}
+              {% set B05 = states('sensor.soulsens_dpid103_05') %}
+              {% set B06 = states('sensor.soulsens_dpid103_06') %}
+              {% set B07 = states('sensor.soulsens_dpid103_07') %}
+              {% set B08 = '00' %}
+              {% set B09 = states('sensor.soulsens_dpid103_09') %}
+              {% set B10 = states('sensor.soulsens_dpid103_10') %}
+              {% set PREi = 390 %}
+              {% set B00i = ('0x' ~ B00) | int(base=16) %}
+              {% set B01i = ('0x' ~ B01) | int(base=16) %}
+              {% set B02i = ('0x' ~ B02) | int(base=16) %}
+              {% set B03i = ('0x' ~ B03) | int(base=16) %}
+              {% set B04i = ('0x' ~ B04) | int(base=16) %}
+              {% set B05i = ('0x' ~ B05) | int(base=16) %}
+              {% set B06i = ('0x' ~ B06) | int(base=16) %}
+              {% set B07i = ('0x' ~ B07) | int(base=16) %}
+              {% set B08i = ('0x' ~ B08) | int(base=16) %}
+              {% set B09i = ('0x' ~ B09) | int(base=16) %}
+              {% set B10i = ('0x' ~ B10) | int(base=16) %}
+              {% set CHKi = (PREi+B00i+B01i+B02i+B03i+B04i+B05i+B06i+B07i+B08i+B09i+B10i) % 256 %}
+              {% set CHK = "%02x" % CHKi %}
+              {{ PRE~B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10~CHK }}
+        set_level:
+          service: mqtt.publish
+          data:
+            topic: cmnd/your_tasmota_topic/SerialSend5
+            retain: true
+            payload_template: >
+              {% set PRE = "55AA0006000F6700000B" %}
+              {% set B00 = states('sensor.soulsens_dpid103_00') %}
+              {% set B01 = states('sensor.soulsens_dpid103_01') %}
+              {% set B02 = "%02x" % max(1,(((brightness|float)*20/255) | int)) %}
+              {% set B03 = states('sensor.soulsens_dpid103_03') %}
+              {% set B04 = states('sensor.soulsens_dpid103_04') %}
+              {% set B05 = states('sensor.soulsens_dpid103_05') %}
+              {% set B06 = states('sensor.soulsens_dpid103_06') %}
+              {% set B07 = states('sensor.soulsens_dpid103_07') %}
+              {% set B08 = states('sensor.soulsens_dpid103_08') %}
+              {% set B09 = states('sensor.soulsens_dpid103_09') %}
+              {% set B10 = states('sensor.soulsens_dpid103_10') %}
+              {% set PREi = 390 %}
+              {% set B00i = ('0x' ~ B00) | int(base=16) %}
+              {% set B01i = ('0x' ~ B01) | int(base=16) %}
+              {% set B02i = ('0x' ~ B02) | int(base=16) %}
+              {% set B03i = ('0x' ~ B03) | int(base=16) %}
+              {% set B04i = ('0x' ~ B04) | int(base=16) %}
+              {% set B05i = ('0x' ~ B05) | int(base=16) %}
+              {% set B06i = ('0x' ~ B06) | int(base=16) %}
+              {% set B07i = ('0x' ~ B07) | int(base=16) %}
+              {% set B08i = ('0x' ~ B08) | int(base=16) %}
+              {% set B09i = ('0x' ~ B09) | int(base=16) %}
+              {% set B10i = ('0x' ~ B10) | int(base=16) %}
+              {% set CHKi = (PREi+B00i+B01i+B02i+B03i+B04i+B05i+B06i+B07i+B08i+B09i+B10i) % 256 %}
+              {% set CHK = "%02x" % CHKi %}
+              {{ PRE~B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10~CHK }}
+        set_temperature:
+          service: mqtt.publish
+          data:
+            topic: cmnd/your_tasmota_topic/SerialSend5
+            retain: true
+            payload_template: >
+              {% set PRE = "55AA0006000F6700000B" %}
+              {% set B00 = states('sensor.soulsens_dpid103_00') %}
+              {% set B01 = states('sensor.soulsens_dpid103_01') %}
+              {% set B02 = states('sensor.soulsens_dpid103_02') %}
+              {% set B03 = "%02x" % (((500 - (color_temp|float))*100/347) | int) %}
+              {% set B04 = states('sensor.soulsens_dpid103_04') %}
+              {% set B05 = states('sensor.soulsens_dpid103_05') %}
+              {% set B06 = states('sensor.soulsens_dpid103_06') %}
+              {% set B07 = states('sensor.soulsens_dpid103_07') %}
+              {% set B08 = states('sensor.soulsens_dpid103_08') %}
+              {% set B09 = states('sensor.soulsens_dpid103_09') %}
+              {% set B10 = states('sensor.soulsens_dpid103_10') %}
+              {% set PREi = 390 %}
+              {% set B00i = ('0x' ~ B00) | int(base=16) %}
+              {% set B01i = ('0x' ~ B01) | int(base=16) %}
+              {% set B02i = ('0x' ~ B02) | int(base=16) %}
+              {% set B03i = ('0x' ~ B03) | int(base=16) %}
+              {% set B04i = ('0x' ~ B04) | int(base=16) %}
+              {% set B05i = ('0x' ~ B05) | int(base=16) %}
+              {% set B06i = ('0x' ~ B06) | int(base=16) %}
+              {% set B07i = ('0x' ~ B07) | int(base=16) %}
+              {% set B08i = ('0x' ~ B08) | int(base=16) %}
+              {% set B09i = ('0x' ~ B09) | int(base=16) %}
+              {% set B10i = ('0x' ~ B10) | int(base=16) %}
+              {% set CHKi = (PREi+B00i+B01i+B02i+B03i+B04i+B05i+B06i+B07i+B08i+B09i+B10i) % 256 %}
+              {% set CHK = "%02x" % CHKi %}
+              {{ PRE~B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10~CHK }}
+
+      soulsens_nl_color:
+        friendly_name: "Soulsens NL Color"
+        value_template: >
+          {% set val1 = ('0x' ~ states('sensor.soulsens_dpid103_00')) | int(base=16) %}
+          {% set val2 = ('0x' ~ states('sensor.soulsens_dpid103_04')) | int(base=16) %}
+          {% set val3 = val1 + val2 %}
+          {% if val3 == 2 %}
+            ON
+          {% else %}
+            OFF
+          {% endif %}
+        level_template: >
+          {% set value = ('0x' ~ states('sensor.soulsens_dpid103_05')) | int(base=16) %}
+          {{ ((value|float)*255/20) | int }}
+        color_template: >
+          {% set value = ('0x' ~ states('sensor.soulsens_dpid103_06') ~ states('sensor.soulsens_dpid103_07')) | int(base=16) %}
+          {{ value }},100
+        turn_on:
+          service: mqtt.publish
+          data:
+            topic: cmnd/your_tasmota_topic/SerialSend5
+            retain: true
+            payload_template: >
+              {% set PRE = "55AA0006000F6700000B" %}
+              {% set B00 = '01' %}
+              {% set B01 = '00' %}
+              {% set B02 = states('sensor.soulsens_dpid103_02') %}
+              {% set B03 = states('sensor.soulsens_dpid103_03') %}
+              {% set B04 = '01' %}
+              {% set B05 = states('sensor.soulsens_dpid103_05') %}
+              {% set B06 = states('sensor.soulsens_dpid103_06') %}
+              {% set B07 = states('sensor.soulsens_dpid103_07') %}
+              {% set B08 = '00' %}
+              {% set B09 = states('sensor.soulsens_dpid103_09') %}
+              {% set B10 = states('sensor.soulsens_dpid103_10') %}
+              {% set PREi = 390 %}
+              {% set B00i = ('0x' ~ B00) | int(base=16) %}
+              {% set B01i = ('0x' ~ B01) | int(base=16) %}
+              {% set B02i = ('0x' ~ B02) | int(base=16) %}
+              {% set B03i = ('0x' ~ B03) | int(base=16) %}
+              {% set B04i = ('0x' ~ B04) | int(base=16) %}
+              {% set B05i = ('0x' ~ B05) | int(base=16) %}
+              {% set B06i = ('0x' ~ B06) | int(base=16) %}
+              {% set B07i = ('0x' ~ B07) | int(base=16) %}
+              {% set B08i = ('0x' ~ B08) | int(base=16) %}
+              {% set B09i = ('0x' ~ B09) | int(base=16) %}
+              {% set B10i = ('0x' ~ B10) | int(base=16) %}
+              {% set CHKi = (PREi+B00i+B01i+B02i+B03i+B04i+B05i+B06i+B07i+B08i+B09i+B10i) % 256 %}
+              {% set CHK = "%02x" % CHKi %}
+              {{ PRE~B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10~CHK }}
+        turn_off: # if the white light is "turned off" we will switch modes to the white light and turn off
+          service: mqtt.publish
+          data:
+            topic: cmnd/your_tasmota_topic/SerialSend5
+            retain: true
+            payload_template: >
+              {% set PRE = "55AA0006000F6700000B" %}
+              {% set B00 = '00' %}
+              {% set B01 = '00' %}
+              {% set B02 = states('sensor.soulsens_dpid103_02') %}
+              {% set B03 = states('sensor.soulsens_dpid103_03') %}
+              {% set B04 = '01' %}
+              {% set B05 = states('sensor.soulsens_dpid103_05') %}
+              {% set B06 = states('sensor.soulsens_dpid103_06') %}
+              {% set B07 = states('sensor.soulsens_dpid103_07') %}
+              {% set B08 = '00' %}
+              {% set B09 = states('sensor.soulsens_dpid103_09') %}
+              {% set B10 = states('sensor.soulsens_dpid103_10') %}
+              {% set PREi = 390 %}
+              {% set B00i = ('0x' ~ B00) | int(base=16) %}
+              {% set B01i = ('0x' ~ B01) | int(base=16) %}
+              {% set B02i = ('0x' ~ B02) | int(base=16) %}
+              {% set B03i = ('0x' ~ B03) | int(base=16) %}
+              {% set B04i = ('0x' ~ B04) | int(base=16) %}
+              {% set B05i = ('0x' ~ B05) | int(base=16) %}
+              {% set B06i = ('0x' ~ B06) | int(base=16) %}
+              {% set B07i = ('0x' ~ B07) | int(base=16) %}
+              {% set B08i = ('0x' ~ B08) | int(base=16) %}
+              {% set B09i = ('0x' ~ B09) | int(base=16) %}
+              {% set B10i = ('0x' ~ B10) | int(base=16) %}
+              {% set CHKi = (PREi+B00i+B01i+B02i+B03i+B04i+B05i+B06i+B07i+B08i+B09i+B10i) % 256 %}
+              {% set CHK = "%02x" % CHKi %}
+              {{ PRE~B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10~CHK }}
+        set_level:
+          service: mqtt.publish
+          data:
+            topic: cmnd/your_tasmota_topic/SerialSend5
+            retain: true
+            payload_template: >
+              {% set PRE = "55AA0006000F6700000B" %}
+              {% set B00 = states('sensor.soulsens_dpid103_00') %}
+              {% set B01 = states('sensor.soulsens_dpid103_01') %}
+              {% set B02 = states('sensor.soulsens_dpid103_02') %}
+              {% set B03 = states('sensor.soulsens_dpid103_03') %}
+              {% set B04 = states('sensor.soulsens_dpid103_04') %}
+              {% set B05 = "%02x" % max(1,(((brightness|float)*20/255) | int)) %}
+              {% set B06 = states('sensor.soulsens_dpid103_06') %}
+              {% set B07 = states('sensor.soulsens_dpid103_07') %}
+              {% set B08 = states('sensor.soulsens_dpid103_08') %}
+              {% set B09 = states('sensor.soulsens_dpid103_09') %}
+              {% set B10 = states('sensor.soulsens_dpid103_10') %}
+              {% set PREi = 390 %}
+              {% set B00i = ('0x' ~ B00) | int(base=16) %}
+              {% set B01i = ('0x' ~ B01) | int(base=16) %}
+              {% set B02i = ('0x' ~ B02) | int(base=16) %}
+              {% set B03i = ('0x' ~ B03) | int(base=16) %}
+              {% set B04i = ('0x' ~ B04) | int(base=16) %}
+              {% set B05i = ('0x' ~ B05) | int(base=16) %}
+              {% set B06i = ('0x' ~ B06) | int(base=16) %}
+              {% set B07i = ('0x' ~ B07) | int(base=16) %}
+              {% set B08i = ('0x' ~ B08) | int(base=16) %}
+              {% set B09i = ('0x' ~ B09) | int(base=16) %}
+              {% set B10i = ('0x' ~ B10) | int(base=16) %}
+              {% set CHKi = (PREi+B00i+B01i+B02i+B03i+B04i+B05i+B06i+B07i+B08i+B09i+B10i) % 256 %}
+              {% set CHK = "%02x" % CHKi %}
+              {{ PRE~B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10~CHK }}
+        set_color:
+          service: mqtt.publish
+          data:
+            topic: cmnd/your_tasmota_topic/SerialSend5
+            retain: true
+            payload_template: >
+              {% set color1 = ("%04x" % (h|int))[0:2] %}
+              {% set color2 = ("%04x" % (h|int))[2:4] %}
+              {% set PRE = "55AA0006000F6700000B" %}
+              {% set B00 = states('sensor.soulsens_dpid103_00') %}
+              {% set B01 = states('sensor.soulsens_dpid103_01') %}
+              {% set B02 = states('sensor.soulsens_dpid103_02') %}
+              {% set B03 = states('sensor.soulsens_dpid103_03') %}
+              {% set B04 = states('sensor.soulsens_dpid103_04') %}
+              {% set B05 = states('sensor.soulsens_dpid103_05') %}
+              {% set B06 = color1 %}
+              {% set B07 = color2 %}
+              {% set B08 = states('sensor.soulsens_dpid103_08') %}
+              {% set B09 = states('sensor.soulsens_dpid103_09') %}
+              {% set B10 = states('sensor.soulsens_dpid103_10') %}
+              {% set PREi = 390 %}
+              {% set B00i = ('0x' ~ B00) | int(base=16) %}
+              {% set B01i = ('0x' ~ B01) | int(base=16) %}
+              {% set B02i = ('0x' ~ B02) | int(base=16) %}
+              {% set B03i = ('0x' ~ B03) | int(base=16) %}
+              {% set B04i = ('0x' ~ B04) | int(base=16) %}
+              {% set B05i = ('0x' ~ B05) | int(base=16) %}
+              {% set B06i = ('0x' ~ B06) | int(base=16) %}
+              {% set B07i = ('0x' ~ B07) | int(base=16) %}
+              {% set B08i = ('0x' ~ B08) | int(base=16) %}
+              {% set B09i = ('0x' ~ B09) | int(base=16) %}
+              {% set B10i = ('0x' ~ B10) | int(base=16) %}
+              {% set CHKi = (PREi+B00i+B01i+B02i+B03i+B04i+B05i+B06i+B07i+B08i+B09i+B10i) % 256 %}
+              {% set CHK = "%02x" % CHKi %}
+              {{ PRE~B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10~CHK }}
+      soulsens_nl_effect:
+        friendly_name: "Soulsens NL Effect"
+        value_template: >
+          {% set val1 = ('0x' ~ states('sensor.soulsens_dpid103_00')) | int(base=16) %}
+          {% set val2 = ('0x' ~ states('sensor.soulsens_dpid103_08')) | int(base=16) %}
+          {% set val3 = val1 + val2 %}
+          {% if val3 == 2 %}
+            ON
+          {% else %}
+            OFF
+          {% endif %}
+        level_template: >
+          {% set value = ('0x' ~ states('sensor.soulsens_dpid103_09')) | int(base=16) %}
+          {{ ((value|float)*255/20) | int }}
+        effect_list_template: >
+          {{ "['Breathe','Leap','Sunset','Candle']" }}
+        effect_template: >
+          {% set value = ('0x' ~ states('sensor.soulsens_dpid103_10')) | int(base=16) %}
+          {% if value == 1 %}
+            Breathe
+          {% elif value == 2 %}
+            Leap
+          {% elif value == 3 %}
+            Sunset
+          {% elif value == 4 %}
+            Candle
+          {% endif %}
+        turn_on:
+          service: mqtt.publish
+          data:
+            topic: cmnd/your_tasmota_topic/SerialSend5
+            retain: true
+            payload_template: >
+              {% set PRE = "55AA0006000F6700000B" %}
+              {% set B00 = '01' %}
+              {% set B01 = '00' %}
+              {% set B02 = states('sensor.soulsens_dpid103_02') %}
+              {% set B03 = states('sensor.soulsens_dpid103_03') %}
+              {% set B04 = '00' %}
+              {% set B05 = states('sensor.soulsens_dpid103_05') %}
+              {% set B06 = states('sensor.soulsens_dpid103_06') %}
+              {% set B07 = states('sensor.soulsens_dpid103_07') %}
+              {% set B08 = '01' %}
+              {% set B09 = states('sensor.soulsens_dpid103_09') %}
+              {% set B10 = states('sensor.soulsens_dpid103_10') %}
+              {% set PREi = 390 %}
+              {% set B00i = ('0x' ~ B00) | int(base=16) %}
+              {% set B01i = ('0x' ~ B01) | int(base=16) %}
+              {% set B02i = ('0x' ~ B02) | int(base=16) %}
+              {% set B03i = ('0x' ~ B03) | int(base=16) %}
+              {% set B04i = ('0x' ~ B04) | int(base=16) %}
+              {% set B05i = ('0x' ~ B05) | int(base=16) %}
+              {% set B06i = ('0x' ~ B06) | int(base=16) %}
+              {% set B07i = ('0x' ~ B07) | int(base=16) %}
+              {% set B08i = ('0x' ~ B08) | int(base=16) %}
+              {% set B09i = ('0x' ~ B09) | int(base=16) %}
+              {% set B10i = ('0x' ~ B10) | int(base=16) %}
+              {% set CHKi = (PREi+B00i+B01i+B02i+B03i+B04i+B05i+B06i+B07i+B08i+B09i+B10i) % 256 %}
+              {% set CHK = "%02x" % CHKi %}
+              {{ PRE~B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10~CHK }}
+        turn_off: # if the white light is "turned off" we will switch modes to the white light and turn off
+          service: mqtt.publish
+          data:
+            topic: cmnd/your_tasmota_topic/SerialSend5
+            retain: true
+            payload_template: >
+              {% set PRE = "55AA0006000F6700000B" %}
+              {% set B00 = '00' %}
+              {% set B01 = '00' %}
+              {% set B02 = states('sensor.soulsens_dpid103_02') %}
+              {% set B03 = states('sensor.soulsens_dpid103_03') %}
+              {% set B04 = '00' %}
+              {% set B05 = states('sensor.soulsens_dpid103_05') %}
+              {% set B06 = states('sensor.soulsens_dpid103_06') %}
+              {% set B07 = states('sensor.soulsens_dpid103_07') %}
+              {% set B08 = '01' %}
+              {% set B09 = states('sensor.soulsens_dpid103_09') %}
+              {% set B10 = states('sensor.soulsens_dpid103_10') %}
+              {% set PREi = 390 %}
+              {% set B00i = ('0x' ~ B00) | int(base=16) %}
+              {% set B01i = ('0x' ~ B01) | int(base=16) %}
+              {% set B02i = ('0x' ~ B02) | int(base=16) %}
+              {% set B03i = ('0x' ~ B03) | int(base=16) %}
+              {% set B04i = ('0x' ~ B04) | int(base=16) %}
+              {% set B05i = ('0x' ~ B05) | int(base=16) %}
+              {% set B06i = ('0x' ~ B06) | int(base=16) %}
+              {% set B07i = ('0x' ~ B07) | int(base=16) %}
+              {% set B08i = ('0x' ~ B08) | int(base=16) %}
+              {% set B09i = ('0x' ~ B09) | int(base=16) %}
+              {% set B10i = ('0x' ~ B10) | int(base=16) %}
+              {% set CHKi = (PREi+B00i+B01i+B02i+B03i+B04i+B05i+B06i+B07i+B08i+B09i+B10i) % 256 %}
+              {% set CHK = "%02x" % CHKi %}
+              {{ PRE~B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10~CHK }}
+        set_level:
+          service: mqtt.publish
+          data:
+            topic: cmnd/your_tasmota_topic/SerialSend5
+            retain: true
+            payload_template: >
+              {% set PRE = "55AA0006000F6700000B" %}
+              {% set B00 = states('sensor.soulsens_dpid103_00') %}
+              {% set B01 = states('sensor.soulsens_dpid103_01') %}
+              {% set B02 = states('sensor.soulsens_dpid103_02') %}
+              {% set B03 = states('sensor.soulsens_dpid103_03') %}
+              {% set B04 = states('sensor.soulsens_dpid103_04') %}
+              {% set B05 = states('sensor.soulsens_dpid103_05') %}
+              {% set B06 = states('sensor.soulsens_dpid103_06') %}
+              {% set B07 = states('sensor.soulsens_dpid103_07') %}
+              {% set B08 = states('sensor.soulsens_dpid103_08') %}
+              {% set B09 = "%02x" % max(1,(((brightness|float)*20/255) | int)) %}
+              {% set B10 = states('sensor.soulsens_dpid103_10') %}
+              {% set PREi = 390 %}
+              {% set B00i = ('0x' ~ B00) | int(base=16) %}
+              {% set B01i = ('0x' ~ B01) | int(base=16) %}
+              {% set B02i = ('0x' ~ B02) | int(base=16) %}
+              {% set B03i = ('0x' ~ B03) | int(base=16) %}
+              {% set B04i = ('0x' ~ B04) | int(base=16) %}
+              {% set B05i = ('0x' ~ B05) | int(base=16) %}
+              {% set B06i = ('0x' ~ B06) | int(base=16) %}
+              {% set B07i = ('0x' ~ B07) | int(base=16) %}
+              {% set B08i = ('0x' ~ B08) | int(base=16) %}
+              {% set B09i = ('0x' ~ B09) | int(base=16) %}
+              {% set B10i = ('0x' ~ B10) | int(base=16) %}
+              {% set CHKi = (PREi+B00i+B01i+B02i+B03i+B04i+B05i+B06i+B07i+B08i+B09i+B10i) % 256 %}
+              {% set CHK = "%02x" % CHKi %}
+              {{ PRE~B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10~CHK }}
+        set_effect:
+          service: mqtt.publish
+          data:
+            topic: cmnd/your_tasmota_topic/SerialSend5
+            retain: true
+            payload_template: >
+              {% if effect == 'Breathe' %}
+                {% set effect_val = '01' %}
+              {% elif effect == 'Leap' %}
+                {% set effect_val = '02' %}
+              {% elif effect == 'Sunset' %}
+                {% set effect_val = '03' %}
+              {% elif effect == 'Candle' %}
+                {% set effect_val = '04' %}
+              {% endif %}
+              {% set PRE = "55AA0006000F6700000B" %}
+              {% set B00 = states('sensor.soulsens_dpid103_00') %}
+              {% set B01 = states('sensor.soulsens_dpid103_01') %}
+              {% set B02 = states('sensor.soulsens_dpid103_02') %}
+              {% set B03 = states('sensor.soulsens_dpid103_03') %}
+              {% set B04 = states('sensor.soulsens_dpid103_04') %}
+              {% set B05 = states('sensor.soulsens_dpid103_05') %}
+              {% set B06 = states('sensor.soulsens_dpid103_06') %}
+              {% set B07 = states('sensor.soulsens_dpid103_07') %}
+              {% set B08 = states('sensor.soulsens_dpid103_08') %}
+              {% set B09 = states('sensor.soulsens_dpid103_09') %}
+              {% set B10 = effect_val %}
+              {% set PREi = 390 %}
+              {% set B00i = ('0x' ~ B00) | int(base=16) %}
+              {% set B01i = ('0x' ~ B01) | int(base=16) %}
+              {% set B02i = ('0x' ~ B02) | int(base=16) %}
+              {% set B03i = ('0x' ~ B03) | int(base=16) %}
+              {% set B04i = ('0x' ~ B04) | int(base=16) %}
+              {% set B05i = ('0x' ~ B05) | int(base=16) %}
+              {% set B06i = ('0x' ~ B06) | int(base=16) %}
+              {% set B07i = ('0x' ~ B07) | int(base=16) %}
+              {% set B08i = ('0x' ~ B08) | int(base=16) %}
+              {% set B09i = ('0x' ~ B09) | int(base=16) %}
+              {% set B10i = ('0x' ~ B10) | int(base=16) %}
+              {% set CHKi = (PREi+B00i+B01i+B02i+B03i+B04i+B05i+B06i+B07i+B08i+B09i+B10i) % 256 %}
+              {% set CHK = "%02x" % CHKi %}
+              {{ PRE~B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10~CHK }}

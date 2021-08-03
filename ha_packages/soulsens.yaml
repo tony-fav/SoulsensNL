@@ -8,10 +8,10 @@ script:
           topic: "cmnd/{{ topic }}/SerialSend5"
           retain: true
           payload_template: >
-            {% set dplen = ((dpdata|length)/2) | int %}
+            {% set dplen = (((dpdata|string)|length)/2) | int %}
             {% set clen = (4 + dplen) %}
-            {% set sdu = ('%02X' % dpid) ~ ('%02X' % dptype) ~ ('%04x' % dplen) ~ dpdata %}
-            {% set cdata = '55AA0006' ~ ('%04x' % clen) ~ sdu %}
+            {% set sdu = ('%02X' % dpid) ~ ('%02X' % dptype) ~ ('%04X' % dplen) ~ dpdata %}
+            {% set cdata = '55AA0006' ~ ('%04X' % clen) ~ sdu %}
             {% set checksum = namespace(value=0) %}
             {% for n in range(0,(cdata|length),2) %}
               {%- set checksum.value = checksum.value + ('0x' ~ cdata[n:n+2]) | int(base=16) -%}
@@ -20,6 +20,14 @@ script:
             {{ cdata ~ chk }}
 
 sensor:
+  # these are more reliable sensors but require a rule on Tasmota to republish
+  - platform: mqtt
+    name: soulsens_dpid102
+    unique_id: soulsens_dpid102
+    state_topic: soulsens/sleep
+    availability_topic: tele/your_topic/LWT
+    payload_available: Online
+    payload_not_available: Offline
   - platform: mqtt
     name: soulsens_dpid103
     unique_id: soulsens_dpid103
@@ -34,7 +42,168 @@ sensor:
     availability_topic: tele/your_topic/LWT
     payload_available: Online
     payload_not_available: Offline
+  - platform: mqtt
+    name: soulsens_dpid111
+    unique_id: soulsens_dpid111
+    state_topic: soulsens/sleep_time
+    availability_topic: tele/your_topic/LWT
+    payload_available: Online
+    payload_not_available: Offline
+  - platform: mqtt
+    name: soulsens_dpid112
+    unique_id: soulsens_dpid112
+    state_topic: soulsens/sleep_sound
+    availability_topic: tele/your_topic/LWT
+    payload_available: Online
+    payload_not_available: Offline
+  - platform: mqtt
+    name: soulsens_dpid113
+    unique_id: soulsens_dpid113
+    state_topic: soulsens/sleep_light
+    availability_topic: tele/your_topic/LWT
+    payload_available: Online
+    payload_not_available: Offline
 
+  # these sensors lose their value on HA reload (or even just MQTT entity reload)
+  # can either "TuyaSend8" or "Restart 1" to get these manually
+  - platform: mqtt
+    name: soulsens_dpid20
+    unique_id: soulsens_dpid20
+    state_topic: tele/your_topic/RESULT
+    availability_topic: tele/your_topic/LWT
+    payload_available: Online
+    payload_not_available: Offline
+    value_template: >-
+      {% if value_json['TuyaReceived']['20'] is defined %}
+        {{ value_json['TuyaReceived']['20']['DpIdData'] }}
+      {% else %}  
+        {{ states('sensor.soulsens_dpid20') }}
+      {% endif %}
+  - platform: mqtt
+    name: soulsens_dpid101
+    unique_id: soulsens_dpid101
+    state_topic: tele/your_topic/RESULT
+    availability_topic: tele/your_topic/LWT
+    payload_available: Online
+    payload_not_available: Offline
+    value_template: >-
+      {% if value_json['TuyaReceived']['101'] is defined %}
+        {{ value_json['TuyaReceived']['101']['DpIdData'] }}
+      {% else %}  
+        {{ states('sensor.soulsens_dpid101') }}
+      {% endif %}
+  # - platform: mqtt
+  #   name: soulsens_dpid102
+  #   unique_id: soulsens_dpid102
+  #   state_topic: tele/your_topic/RESULT
+  #   availability_topic: tele/your_topic/LWT
+  #   payload_available: Online
+  #   payload_not_available: Offline
+  #   value_template: >-
+  #     {% if value_json['TuyaReceived']['102'] is defined %}
+  #       {{ value_json['TuyaReceived']['102']['DpIdData'] }}
+  #     {% else %}
+  #       {{ states('sensor.soulsens_dpid102') }}
+  #     {% endif %}
+  # - platform: mqtt
+  #   name: soulsens_dpid103
+  #   unique_id: soulsens_dpid103
+  #   state_topic: tele/your_topic/RESULT
+  #   availability_topic: tele/your_topic/LWT
+  #   payload_available: Online
+  #   payload_not_available: Offline
+  #   value_template: >-
+  #     {% if value_json['TuyaReceived']['103'] is defined %}
+  #       {{ value_json['TuyaReceived']['103']['DpIdData'] }}
+  #     {% else %}
+  #       {{ states('sensor.soulsens_dpid103') }}
+  #     {% endif %}
+  # - platform: mqtt
+  #   name: soulsens_dpid104
+  #   unique_id: soulsens_dpid104
+  #   state_topic: tele/your_topic/RESULT
+  #   availability_topic: tele/your_topic/LWT
+  #   payload_available: Online
+  #   payload_not_available: Offline
+  #   value_template: >-
+  #     {% if value_json['TuyaReceived']['104'] is defined %}
+  #       {{ value_json['TuyaReceived']['104']['DpIdData'] }}
+  #     {% else %}
+  #       {{ states('sensor.soulsens_dpid104') }}
+  #     {% endif %}
+  - platform: mqtt
+    name: soulsens_dpid105
+    unique_id: soulsens_dpid105
+    state_topic: tele/your_topic/RESULT
+    availability_topic: tele/your_topic/LWT
+    payload_available: Online
+    payload_not_available: Offline
+    value_template: >-
+      {% if value_json['TuyaReceived']['105'] is defined %}
+        {{ value_json['TuyaReceived']['105']['DpIdData'] }}
+      {% else %}  
+        {{ states('sensor.soulsens_dpid105') }}
+      {% endif %}
+
+  # dpid 106 is a command from wifi module to tuya mcu only to set time format
+
+  - platform: mqtt
+    name: soulsens_dpid107
+    unique_id: soulsens_dpid107
+    state_topic: tele/your_topic/RESULT
+    availability_topic: tele/your_topic/LWT
+    payload_available: Online
+    payload_not_available: Offline
+    value_template: >-
+      {% if value_json['TuyaReceived']['107'] is defined %}
+        {{ value_json['TuyaReceived']['107']['DpIdData'] }}
+      {% else %}  
+        {{ states('sensor.soulsens_dpid107') }}
+      {% endif %}
+
+  # dpid 108 is a command to preview the alarm setting for 10 seconds
+  # dpid 109 is a command telling which alarm to preview the settings of. these come in 1 message
+  # dpid 110 is a command to cycle through the sounds 0 decrement, 1 increment
+
+  # - platform: mqtt
+  #   name: soulsens_dpid111
+  #   unique_id: soulsens_dpid111
+  #   state_topic: tele/your_topic/RESULT
+  #   availability_topic: tele/your_topic/LWT
+  #   payload_available: Online
+  #   payload_not_available: Offline
+  #   value_template: >-
+  #     {% if value_json['TuyaReceived']['111'] is defined %}
+  #       {{ value_json['TuyaReceived']['111']['DpIdData'] }}
+  #     {% else %}
+  #       {{ states('sensor.soulsens_dpid111') }}
+  #     {% endif %}
+  # - platform: mqtt
+  #   name: soulsens_dpid112
+  #   unique_id: soulsens_dpid112
+  #   state_topic: tele/your_topic/RESULT
+  #   availability_topic: tele/your_topic/LWT
+  #   payload_available: Online
+  #   payload_not_available: Offline
+  #   value_template: >-
+  #     {% if value_json['TuyaReceived']['112'] is defined %}
+  #       {{ value_json['TuyaReceived']['112']['DpIdData'] }}
+  #     {% else %}
+  #       {{ states('sensor.soulsens_dpid112') }}
+  #     {% endif %}
+  # - platform: mqtt
+  #   name: soulsens_dpid113
+  #   unique_id: soulsens_dpid113
+  #   state_topic: tele/your_topic/RESULT
+  #   availability_topic: tele/your_topic/LWT
+  #   payload_available: Online
+  #   payload_not_available: Offline
+  #   value_template: >-
+  #     {% if value_json['TuyaReceived']['113'] is defined %}
+  #       {{ value_json['TuyaReceived']['113']['DpIdData'] }}
+  #     {% else %}
+  #       {{ states('sensor.soulsens_dpid113') }}
+  #     {% endif %}
 light:
   - platform: template
     lights:
@@ -102,7 +271,7 @@ light:
             dpdata: >
               {% set B00 = states('sensor.soulsens_dpid103')[0:2] %}
               {% set B01 = states('sensor.soulsens_dpid103')[2:4] %}
-              {% set B02 = "%02x" % max(1,(((brightness|float)*20/255) | int)) %}
+              {% set B02 = "%02X" % max(1,(((brightness|float)*20/255) | int)) %}
               {% set B03 = states('sensor.soulsens_dpid103')[6:8] %}
               {% set B04 = states('sensor.soulsens_dpid103')[8:10] %}
               {% set B05 = states('sensor.soulsens_dpid103')[10:12] %}
@@ -122,7 +291,7 @@ light:
               {% set B00 = states('sensor.soulsens_dpid103')[0:2] %}
               {% set B01 = states('sensor.soulsens_dpid103')[2:4] %}
               {% set B02 = states('sensor.soulsens_dpid103')[4:6] %}
-              {% set B03 = "%02x" % (((500 - (color_temp|float))*100/347) | int) %}
+              {% set B03 = "%02X" % (((500 - (color_temp|float))*100/347) | int) %}
               {% set B04 = states('sensor.soulsens_dpid103')[8:10] %}
               {% set B05 = states('sensor.soulsens_dpid103')[10:12] %}
               {% set B06 = states('sensor.soulsens_dpid103')[12:14] %}
@@ -199,7 +368,7 @@ light:
               {% set B02 = states('sensor.soulsens_dpid103')[4:6] %}
               {% set B03 = states('sensor.soulsens_dpid103')[6:8] %}
               {% set B04 = states('sensor.soulsens_dpid103')[8:10] %}
-              {% set B05 = "%02x" % max(1,(((brightness|float)*20/255) | int)) %}
+              {% set B05 = "%02X" % max(1,(((brightness|float)*20/255) | int)) %}
               {% set B06 = states('sensor.soulsens_dpid103')[12:14] %}
               {% set B07 = states('sensor.soulsens_dpid103')[14:16] %}
               {% set B08 = states('sensor.soulsens_dpid103')[16:18] %}
@@ -219,8 +388,8 @@ light:
               {% set B03 = states('sensor.soulsens_dpid103')[6:8] %}
               {% set B04 = states('sensor.soulsens_dpid103')[8:10] %}
               {% set B05 = states('sensor.soulsens_dpid103')[10:12] %}
-              {% set B06 = ("%04x" % (h|int))[0:2] %}
-              {% set B07 = ("%04x" % (h|int))[2:4] %}
+              {% set B06 = ("%04X" % (h|int))[0:2] %}
+              {% set B07 = ("%04X" % (h|int))[2:4] %}
               {% set B08 = states('sensor.soulsens_dpid103')[16:18] %}
               {% set B09 = states('sensor.soulsens_dpid103')[18:20] %}
               {% set B10 = states('sensor.soulsens_dpid103')[20:22] %}
@@ -306,7 +475,7 @@ light:
               {% set B06 = states('sensor.soulsens_dpid103')[12:14] %}
               {% set B07 = states('sensor.soulsens_dpid103')[14:16] %}
               {% set B08 = states('sensor.soulsens_dpid103')[16:18] %}
-              {% set B09 = "%02x" % max(1,(((brightness|float)*20/255) | int)) %}
+              {% set B09 = "%02X" % max(1,(((brightness|float)*20/255) | int)) %}
               {% set B10 = states('sensor.soulsens_dpid103')[20:22] %}
               {{ B00~B01~B02~B03~B04~B05~B06~B07~B08~B09~B10 }}
         set_effect:
@@ -422,7 +591,7 @@ light:
             dpdata: >
               {% set B00 = states('sensor.soulsens_dpid104')[0:2] %}
               {% set B01 = states('sensor.soulsens_dpid104')[2:4] %}
-              {% set B02 = "%02x" % max(1, (((brightness|float)*15/255) | int)) %}
+              {% set B02 = "%02X" % max(1, (((brightness|float)*15/255) | int)) %}
               {% set B03 = states('sensor.soulsens_dpid104')[6:8] %}
               {{ B00~B01~B02~B03 }}
         set_effect:

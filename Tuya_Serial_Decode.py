@@ -18,16 +18,51 @@ leisure_modes = {1: 'Breathe', 2: 'Leap', 3: 'Sunset', 4: 'Candle'}
 all_sounds = ['None', 'Ocean', 'Thunder', 'Rain', 'Stream','Rainforest','Wind','Deep space','Bird','Cricket','Whale','White Noise', 'Pink Noise','Fan','Hairdryer','Lullaby','Piano','Wind Chimes']
 
 tuya_comm = []
+first_heartbeat = True
 while 1:
     x = ser.read()
     if x == b'\x55':
         y = ser.read()
         if y == b'\xaa':
+            ver = ser.read()
+            com = ser.read()
+            comm_len1 = ser.read()
+            comm_len2 = ser.read()
+            comm_len = int.from_bytes(comm_len1+comm_len2, 'big')
+            tuya_comm = []
+            tuya_comm.append(ord(x))
+            tuya_comm.append(ord(y))
+            tuya_comm.append(ord(ver))
+            tuya_comm.append(ord(com))
+            tuya_comm.append(ord(comm_len1))
+            tuya_comm.append(ord(comm_len2))
+            bits = ser.read(comm_len)
+            for b in bits:
+                tuya_comm.append(ord(b))
+            chk = ser.read()
+            tuya_comm.append(ord(chk))
+
             ts = ''.join('%02x' % b for b in tuya_comm)
+            print(ts)
             if len(tuya_comm) == 0:
                 pass
-            elif ts == '55aa00000000ff': print('Heart Beat') # Heart Beat
-            elif tuya_comm[3] == ord(b'\x01'): print('Query Product Info') 
+            elif ts == '55aa00000000ff': 
+                print('Heart Beat') # Heart Beat
+                if first_heartbeat:
+                    ser.write(bytearray.fromhex('55AA030000010003'))
+                    first_heartbeat = False
+                else:
+                    ser.write(bytearray.fromhex('55AA030000010104'))
+            elif tuya_comm[3] == ord(b'\x01'): 
+                print('Query Product Info') 
+                # ser.write(bytearray.fromhex('55AA0301000003'))
+                # ser.write(bytearray.fromhex('55AA0307000F7100000B0100110001140000000A01C6'))
+                # ser.write(bytearray.fromhex('55AA03070007700000030105018A'))
+                # ser.write(bytearray.fromhex('55AA030700066F0000021E009E'))
+                # ser.write(bytearray.fromhex('55AA03070008680000040011060094'))
+                # ser.write(bytearray.fromhex('55AA0307000F6700000B00010A350012005A00110148'))
+                # ser.write(bytearray.fromhex('55AA030700056B010001017C'))
+                # ser.write(bytearray.fromhex('55AA0307000569040001017D'))
             elif tuya_comm[3] == ord(b'\x02'): print('Query Working Mode')
             elif tuya_comm[3] == ord(b'\x03'): print('Network Status')
             elif tuya_comm[3] == ord(b'\x08'): print('Query Status') 
@@ -111,6 +146,8 @@ while 1:
                     elif sdu_dpid == 102:
                         print('------ Sleep Screen')
                         # first 2 bits are amount of time to be on (DPID 111)
+                            # bit 1: minutes
+                            # bit 2: seconds
                         # next 1 is on or off
                         # next 3 is the sound settings (DPID 112)
                         # next rest are the light settings (DPID 113)
@@ -201,8 +238,3 @@ while 1:
                         n = n+4+sdu_len
             else:
                 print(ts)
-            tuya_comm = [ord(x), ord(y)]
-        else:
-            tuya_comm.append(ord(y))
-    else:
-        tuya_comm.append(ord(x))

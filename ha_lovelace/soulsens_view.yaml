@@ -1,0 +1,65 @@
+views:
+  - title: Soulsens
+    badges: []
+    cards:
+      - type: horizontal-stack
+        title: Light Settings
+        cards:
+          - type: light
+            entity: light.soulsens_nl_white
+            name: White
+          - type: light
+            entity: light.soulsens_nl_color
+            name: Color
+          - type: light
+            entity: light.soulsens_nl_effect
+            name: Effect
+          - type: light
+            entity: light.soulsens_sound
+            name: Sound
+      - type: vertical-stack
+        title: Sleep Settings
+        cards:
+          - type: horizontal-stack
+            cards:
+              - type: light
+                entity: light.soulsens_sleep_white
+                name: White
+              - type: light
+                entity: light.soulsens_sleep_color
+                name: Color
+              - type: light
+                entity: light.soulsens_sleep_effect
+                name: Effect
+              - type: light
+                entity: light.soulsens_sleep_sound
+                name: Sound
+              - type: button
+                entity: switch.soulsens_sleep_mode
+                name: Sleep
+          - type: entities
+            entities:
+              - entity: input_number.soulsens_sleep_time_set
+      - type: entities
+        title: DPIDs
+        entities:
+          - entity: sensor.soulsens_dpid20
+            name: Device On/Off
+          - entity: sensor.soulsens_dpid101
+            name: Four Alarms
+          - entity: sensor.soulsens_dpid102
+            name: Sleep Mode
+          - entity: sensor.soulsens_dpid103
+            name: Light
+          - entity: sensor.soulsens_dpid104
+            name: Sound
+          - entity: sensor.soulsens_dpid105
+            name: Time Format (0=12,1=24)
+          - entity: sensor.soulsens_dpid107
+            name: Manual (0) or Auto (1) Time
+          - entity: sensor.soulsens_dpid111
+            name: Sleep Time Setting
+          - entity: sensor.soulsens_dpid112
+            name: Sleep Sound Settings
+          - entity: sensor.soulsens_dpid113
+            name: Sleep Lights Settings

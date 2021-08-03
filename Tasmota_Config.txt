@@ -1,16 +1,26 @@
 - TuyaMCU Capability
 Module 54
+
 - ESP12F On-Board LED
 GPIO02 -> LEDLinki
+
 - TuyaMCU tries to assign dpid=1 to a switch. Says to do this to turn that off
 TuyaMCU 99,1
-- Get MQTT Publishes
+
+- Get MQTT Publishes (not needed long term, but useful for testing, rules long term)
 SetOption66 1
+
+- Set timezone right bc this thing uses alarms (US, Eastern Time)
+Backlog TimeStd 0,1,11,1,2,-300; TimeDst 0,2,3,1,2,-240; timezone 99
 
 
 Rule1
   On TuyaReceived#103#DpIdData do publish2 soulsens/light %value% endon
   On TuyaReceived#104#DpIdData do publish2 soulsens/sound %value% endon
+  On TuyaReceived#102#DpIdData do publish2 soulsens/sleep %value% endon
+  On TuyaReceived#111#DpIdData do publish2 soulsens/sleep_time %value% endon
+  On TuyaReceived#112#DpIdData do publish2 soulsens/sleep_sound %value% endon
+  On TuyaReceived#113#DpIdData do publish2 soulsens/sleep_light %value% endon
 
 ---- Test Control Light
 
@@ -31,7 +41,7 @@ SerialSend5 55AA0006000F6700000B01010664000200F0000801ED
 110  1  raw Sound Cycle 0 = <-, 1 ->
 111  2  raw Sleep Time Setting
 112  3  raw Sleep Sound Settings
-114 11  raw Sleep Lights Settings
+113 11  raw Sleep Lights Settings
 
 16:08:56.308 {"TuyaReceived":{"Data":"55AA03070005140100010125","Cmnd":7,"CmndData":"1401000101","DpType1Id20":1,"20":{"DpId":20,"DpIdType":1,"DpIdData":"01"}}}
 16:08:56.309 TYA: fnId=0 is set for dpId=20

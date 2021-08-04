@@ -21,6 +21,9 @@ Rule1
   On TuyaReceived#111#DpIdData do publish2 soulsens/sleep_time %value% endon
   On TuyaReceived#112#DpIdData do publish2 soulsens/sleep_sound %value% endon
   On TuyaReceived#113#DpIdData do publish2 soulsens/sleep_light %value% endon
+  On TuyaReceived#20#DpIdData do publish2 soulsens/power %value% endon
+Rule2
+  On TuyaReceived#101#DpIdData do publish2 soulsens/alarm %value% endon
 
 ---- Test Control Light
 

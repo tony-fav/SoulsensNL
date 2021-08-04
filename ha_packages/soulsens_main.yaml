@@ -19,8 +19,86 @@ script:
             {% set chk = '%02X' % (checksum.value % 256) %}
             {{ cdata ~ chk }}
 
+automation:
+  # this is a really dumb DPID that locks out physical control until you turn
+  # the light back on. The Tuya app used it to turn off or on the device.
+  # The physical device sets it to 0 when you exit sleep mode.
+  # That means you can't exit sleep mode then turn on sound without first
+  # turning the light on. So, we just force it to be on all the time.
+  - id: soulsens_keep_master_power_on
+    alias: "Soulsens Update Keep Master Power On"
+    mode: parallel
+    trigger:
+      - platform: state
+        entity_id: sensor.soulsens_dpid20
+        to: "00"
+    action:
+      - service: script.tuya_send
+        data:
+          topic: your_topic
+          dpid: 20
+          dptype: 1
+          dpdata: "01"
+  - id: soulsens_sound_timer
+    alias: "Soulsens Sound Timer"
+    mode: parallel
+    trigger:
+      - platform: state
+        entity_id: input_number.soulsens_sound_timer
+    action:
+      - service: automation.turn_off
+        target:
+          entity_id: automation.soulsens_sound_timer_from_dpid
+      - service: script.tuya_send
+        data:
+          topic: your_topic
+          dpid: 104
+          dptype: 0
+          dpdata: >
+            {% set value = ('%02X' % (states('input_number.soulsens_sound_timer')|int)) %}
+            {{ states('sensor.soulsens_dpid104')[0:6]~value }}
+      - delay: 0:01
+      - service: automation.turn_on
+        target:
+          entity_id: automation.soulsens_sound_timer_from_dpid
+  - id: soulsens_sound_timer_from_dpid
+    alias: "Soulsens Sound Timer on DPID Change"
+    mode: parallel
+    trigger:
+      - platform: state
+        entity_id: sensor.soulsens_dpid104
+    action:
+      - service: input_number.set_value
+        data:
+          value: >
+            {{ ('0x' ~ states('sensor.soulsens_dpid104')[6:8]) | int(base=16) }}
+        target:
+          entity_id: input_number.soulsens_sound_timer
+
+input_number:
+  soulsens_sound_timer:
+    name: "Sound Timer (Minutes)"
+    initial: 0
+    min: 0
+    max: 60
+    step: 1
+
 sensor:
   # these are more reliable sensors but require a rule on Tasmota to republish
+  - platform: mqtt
+    name: soulsens_dpid20
+    unique_id: soulsens_dpid20
+    state_topic: soulsens/power
+    availability_topic: tele/your_topic/LWT
+    payload_available: Online
+    payload_not_available: Offline
+  - platform: mqtt
+    name: soulsens_dpid101
+    unique_id: soulsens_dpid101
+    state_topic: soulsens/alarm
+    availability_topic: tele/your_topic/LWT
+    payload_available: Online
+    payload_not_available: Offline
   - platform: mqtt
     name: soulsens_dpid102
     unique_id: soulsens_dpid102
@@ -66,32 +144,32 @@ sensor:
 
   # these sensors lose their value on HA reload (or even just MQTT entity reload)
   # can either "TuyaSend8" or "Restart 1" to get these manually
-  - platform: mqtt
-    name: soulsens_dpid20
-    unique_id: soulsens_dpid20
-    state_topic: tele/your_topic/RESULT
-    availability_topic: tele/your_topic/LWT
-    payload_available: Online
-    payload_not_available: Offline
-    value_template: >-
-      {% if value_json['TuyaReceived']['20'] is defined %}
-        {{ value_json['TuyaReceived']['20']['DpIdData'] }}
-      {% else %}  
-        {{ states('sensor.soulsens_dpid20') }}
-      {% endif %}
-  - platform: mqtt
-    name: soulsens_dpid101
-    unique_id: soulsens_dpid101
-    state_topic: tele/your_topic/RESULT
-    availability_topic: tele/your_topic/LWT
-    payload_available: Online
-    payload_not_available: Offline
-    value_template: >-
-      {% if value_json['TuyaReceived']['101'] is defined %}
-        {{ value_json['TuyaReceived']['101']['DpIdData'] }}
-      {% else %}  
-        {{ states('sensor.soulsens_dpid101') }}
-      {% endif %}
+  # - platform: mqtt
+  #   name: soulsens_dpid20
+  #   unique_id: soulsens_dpid20
+  #   state_topic: tele/your_topic/RESULT
+  #   availability_topic: tele/your_topic/LWT
+  #   payload_available: Online
+  #   payload_not_available: Offline
+  #   value_template: >-
+  #     {% if value_json['TuyaReceived']['20'] is defined %}
+  #       {{ value_json['TuyaReceived']['20']['DpIdData'] }}
+  #     {% else %}
+  #       {{ states('sensor.soulsens_dpid20') }}
+  #     {% endif %}
+  # - platform: mqtt
+  #   name: soulsens_dpid101
+  #   unique_id: soulsens_dpid101
+  #   state_topic: tele/your_topic/RESULT
+  #   availability_topic: tele/your_topic/LWT
+  #   payload_available: Online
+  #   payload_not_available: Offline
+  #   value_template: >-
+  #     {% if value_json['TuyaReceived']['101'] is defined %}
+  #       {{ value_json['TuyaReceived']['101']['DpIdData'] }}
+  #     {% else %}
+  #       {{ states('sensor.soulsens_dpid101') }}
+  #     {% endif %}
   # - platform: mqtt
   #   name: soulsens_dpid102
   #   unique_id: soulsens_dpid102

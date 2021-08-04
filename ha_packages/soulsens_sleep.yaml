@@ -1,18 +1,11 @@
 automation:
   - id: soulsens_update_sleep_time
-    alias: "Soulsend Update Sleep Time"
+    alias: "Soulsens Update Sleep Time"
     mode: parallel
     trigger:
       - platform: state
         entity_id: input_number.soulsens_sleep_time_set
     action:
-      - service: system_log.write
-        data:
-          message: >
-            {% set value = (('%02X' % (states('input_number.soulsens_sleep_time_set')|int)) ~ '00') %}
-            {{ (('%02X' % (states('input_number.soulsens_sleep_time_set')|int)) ~ '00') }}
-          logger: mycomponent.myplatform
-
       - service: script.tuya_send
         data:
           topic: your_topic
@@ -21,10 +14,32 @@ automation:
           dpdata: >
             {% set value = (('%02X' % (states('input_number.soulsens_sleep_time_set')|int)) ~ '00') %}
             {{ value }}
+  - id: soulsens_update_sleep_from_sub_settings
+    alias: "Soulsens Update Sleep from Sub Settings"
+    mode: parallel
+    trigger:
+      - platform: state
+        entity_id: sensor.soulsens_dpid111
+      - platform: state
+        entity_id: sensor.soulsens_dpid112
+      - platform: state
+        entity_id: sensor.soulsens_dpid113
+    action:
+      - service: script.tuya_send
+        data:
+          topic: your_topic
+          dpid: 102
+          dptype: 0
+          dpdata: >
+            {% set timer = states('sensor.soulsens_dpid111') %}
+            {% set onoff = states('sensor.soulsens_dpid102')[4:6] %}
+            {% set sound = states('sensor.soulsens_dpid112') %}
+            {% set light = states('sensor.soulsens_dpid113') %}
+            {{ timer~onoff~sound~light }}
 
 input_number:
   soulsens_sleep_time_set:
-    name: Sleep Time Set
+    name: "Sleep Time Set (Minutes)"
     initial: 30
     min: 1
     max: 180

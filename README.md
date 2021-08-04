@@ -120,6 +120,15 @@ Rule1
 then
 `Rule1 1`
 
+and
+
+```
+Rule2
+  On TuyaReceived#101#DpIdData do publish2 soulsens/alarm %value% endon
+  ```
+then
+`Rule2 1`
+
 These rules republish the DpIdData to retained messages. This is not required, as we can setup MQTT Sensors in Home Assistant that can receive the publishes sent because of `SetOption66 1` but those publishes don't occur until the device restarts or changes. Check, the HA packages for the MQTT sensor using the republished MQTT vs the Tasmota MQTT (commented out or for currently unused DPIDs).
 
 ## Operation:
@@ -133,17 +142,24 @@ These rules republish the DpIdData to retained messages. This is not required, a
 - Got Sound Mode working as a template light.
 - Got Sleep Mode working.
   - Three template lights for light. One template light for sound. Input number for time. Template swtich for on/off.
+- Sound Mode settings now sync to the Sound Mode master DPID on change instead of only on/off
+- Handling the Power DPID=20. Just keeping it on if it switches to off.
+- Handling the Sound Timer (DPID=104, BIT=4)
+- Got all 4 internal alarms working.
+- Updated Lovelace UI to match current available settings.
+
+## Python Serial Script
+- The developed python script serves 2 purposes: 1) when the WB3S module is attached to the board, it was used to sniff out packets being sent by actions in the Tuya App, but 2) now, it is being used to pretend it's the MCU so the Tuya App is still functional for further sniffing/verification if needed. To put it back into just sniffing mode, comment out the `ser.write` commands.
 
 ## Next Plans:
-- Update the Sleep Mode full dpid on any change of the sub DPIDs
 - Try out sound settings as a Universal Media Player.
-- Implement the Sound Mode timer (different than Sleep Mode).
-- Implement the 4 x Alarms.
+- Try to figure out automations so I can make "input" entities not "send and pray" (get state updates back from the ESP)
 
 ## Notes:
-- Sleep mode from the ESP locks out ALL physical buttons.
+- Sleep mode from the ESP locks out ALL physical buttons. (Hatch calls this "toddler lock") <-- I thought this was true but then it started not locking out the sleep button. Maybe I had an error before that was making it behave the way it was.
 - Sleep mode form physical button locks out all physical buttons EXCEPT sleep button.
 - Sleep mode from physical button does not lock out ESP control.
+- Anything read into Home Assistant as a Template Light/Sensor/etc is verified to have sent because the template only updates on an update of the MQTT published by the ESP. If you send a command that can't be executed, it gets pushed back to the template entity (because of the way they work) that it worked or didn't (you may set brightness 19% but because the device does brigthness from 1-20 that gets rounded and the brigthness slider will snap to the place it actually went. Similar with saturation. The device doesn't support saturation, so you may set it for less then 100 but it will snap to 100 on update.) HOWEVER, things set as input_ use an automation to send the MQTT to the ESP when updated, but currently don't read and verify.
 
 ## Wishes from Other Packages:
 - A `TuyaSend<x>` in Tasmota that sent the `raw` data type.

@@ -1,0 +1,583 @@
+sensor:
+  - platform: template
+    sensors:
+      soulsens_alarm_4_days:
+        friendly_name: "Soulsens Alarm 4 Days"
+        value_template: >
+          {% set value = ('0x' ~ states('sensor.soulsens_dpid101')[56:58]) | int(base=16) %}
+          {% set sun = 0 %}
+          {% set mon = 0 %}
+          {% set tue = 0 %}
+          {% set wed = 0 %}
+          {% set thu = 0 %}
+          {% set fri = 0 %}
+          {% set sat = 0 %}
+          {% if value >= 64 %}
+            {% set value = value-64 %}
+            {% set sun = 1 %}
+          {% endif %}
+          {% if value >= 32 %}
+            {% set value = value-32 %}
+            {% set mon = 1 %}
+          {% endif %}
+          {% if value >= 16 %}
+            {% set value = value-16 %}
+            {% set tue = 1 %}
+          {% endif %}
+          {% if value >= 8 %}
+            {% set value = value-8 %}
+            {% set wed = 1 %}
+          {% endif %}
+          {% if value >= 4 %}
+            {% set value = value-4 %}
+            {% set thu = 1 %}
+          {% endif %}
+          {% if value >= 2 %}
+            {% set value = value-2 %}
+            {% set fri = 1 %}
+          {% endif %}
+          {% if value >= 1 %}
+            {% set value = value-1 %}
+            {% set sat = 1 %}
+          {% endif %}
+          {{ sun,mon,tue,wed,thu,fri,sat }}
+
+automation:
+  - id: soulsens_alarm_4_time
+    alias: "Soulsens Alarm 4 Time"
+    mode: parallel
+    trigger:
+      - platform: state
+        entity_id: input_number.soulsens_alarm_4_hours
+      - platform: state
+        entity_id: input_number.soulsens_alarm_4_minutes
+    action:
+      - service: script.tuya_send
+        data:
+          topic: your_topic
+          dpid: 101
+          dptype: 0
+          dpdata: >
+            {% set pre = states('sensor.soulsens_dpid101')[0:50] %}
+            {% set post = states('sensor.soulsens_dpid101')[54:64] %}
+            {% set hours = states('input_number.soulsens_alarm_4_hours')|int %}
+            {% set minutes = states('input_number.soulsens_alarm_4_minutes')|int %}
+            {% set this = '%04X' % (60*hours + minutes) %}
+            {{ pre ~ this ~ post }}
+  - id: soulsens_alarm_4_brightness
+    alias: "Soulsens Alarm 4 Brightness"
+    mode: parallel
+    trigger:
+      - platform: state
+        entity_id: input_number.soulsens_alarm_4_brightness
+    action:
+      - service: script.tuya_send
+        data:
+          topic: your_topic
+          dpid: 101
+          dptype: 0
+          dpdata: >
+            {% set pre = states('sensor.soulsens_dpid101')[0:54] %}
+            {% set post = states('sensor.soulsens_dpid101')[56:64] %}
+            {% set this = '%02X' % (states('input_number.soulsens_alarm_4_brightness')|int) %}
+            {{ pre ~ this ~ post }}
+  - id: soulsens_alarm_4_volume
+    alias: "Soulsens Alarm 4 Volume"
+    mode: parallel
+    trigger:
+      - platform: state
+        entity_id: input_number.soulsens_alarm_4_volume
+    action:
+      - service: script.tuya_send
+        data:
+          topic: your_topic
+          dpid: 101
+          dptype: 0
+          dpdata: >
+            {% set pre = states('sensor.soulsens_dpid101')[0:60] %}
+            {% set post = states('sensor.soulsens_dpid101')[62:64] %}
+            {% set this = '%02X' % (states('input_number.soulsens_alarm_4_volume')|int) %}
+            {{ pre ~ this ~ post }}
+  - id: soulsens_alarm_4_snooze_time
+    alias: "Soulsens Alarm 4 Snooze Time"
+    mode: parallel
+    trigger:
+      - platform: state
+        entity_id: input_number.soulsens_alarm_4_snooze_time
+    action:
+      - service: script.tuya_send
+        data:
+          topic: your_topic
+          dpid: 101
+          dptype: 0
+          dpdata: >
+            {% set pre = states('sensor.soulsens_dpid101')[0:62] %}
+            {% set this = '%02X' % (states('input_number.soulsens_alarm_4_snooze_time')|int) %}
+            {{ pre ~ this }}
+  - id: soulsens_alarm_4_sound
+    alias: "Soulsens Alarm 4 Sound"
+    mode: parallel
+    trigger:
+      - platform: state
+        entity_id: input_select.soulsens_alarm_4_sound
+    action:
+      - service: script.tuya_send
+        data:
+          topic: your_topic
+          dpid: 101
+          dptype: 0
+          dpdata: >
+            {% set pre = states('sensor.soulsens_dpid101')[0:58] %}
+            {% set post = states('sensor.soulsens_dpid101')[60:64] %}
+            {% set effect = states('input_select.soulsens_alarm_4_sound') %}
+            {% if effect == 'None' %}
+              {% set effect_val = '00' %}
+            {% elif effect == 'Ocean' %}
+              {% set effect_val = '01' %}
+            {% elif effect == 'Thunder' %}
+              {% set effect_val = '02' %}
+            {% elif effect == 'Rain' %}
+              {% set effect_val = '03' %}
+            {% elif effect == 'Stream' %}
+              {% set effect_val = '04' %}
+            {% elif effect == 'Rainforest' %}
+              {% set effect_val = '05' %}
+            {% elif effect == 'Wind' %}
+              {% set effect_val = '06' %}
+            {% elif effect == 'Deep space' %}
+              {% set effect_val = '07' %}
+            {% elif effect == 'Bird' %}
+              {% set effect_val = '08' %}
+            {% elif effect == 'Cricket' %}
+              {% set effect_val = '09' %}
+            {% elif effect == 'Whale' %}
+              {% set effect_val = '0A' %}
+            {% elif effect == 'White Noise' %}
+              {% set effect_val = '0B' %}
+            {% elif effect == 'Pink Noise' %}
+              {% set effect_val = '0C' %}
+            {% elif effect == 'Fan' %}
+              {% set effect_val = '0D' %}
+            {% elif effect == 'Hairdryer' %}
+              {% set effect_val = '0E' %}
+            {% elif effect == 'Lullaby' %}
+              {% set effect_val = '0F' %}
+            {% elif effect == 'Piano' %}
+              {% set effect_val = '10' %}
+            {% elif effect == 'Wind Chimes' %}
+              {% set effect_val = '11' %}
+            {% endif %}
+            {{ pre ~ effect_val ~ post }}
+
+input_number:
+  soulsens_alarm_4_hours:
+    name: Soulsens Alarm 4 Hours
+    initial: 8
+    min: 0
+    max: 23
+    step: 1
+  soulsens_alarm_4_minutes:
+    name: Soulsens Alarm 4 Minutes
+    initial: 0
+    min: 0
+    max: 59
+    step: 1
+  soulsens_alarm_4_brightness:
+    name: Soulsens Alarm 4 Brightness
+    initial: 100
+    min: 1
+    max: 100
+    step: 1
+  soulsens_alarm_4_volume:
+    name: Soulsens Alarm 4 Volume
+    initial: 5
+    min: 1
+    max: 15
+  soulsens_alarm_4_snooze_time:
+    name: Soulsens Alarm 4 Snooze Time
+    initial: 5
+    min: 1
+    max: 30
+
+# In the app only this subset was available, need to test to check the others
+input_select:
+  soulsens_alarm_4_sound:
+    name: Soulsens Alarm 4 Sound
+    options:
+      - None
+      - Ocean
+      - Thunder
+      - Rain
+      - Stream
+      - Rainforest
+      - Wind
+      - Deep space
+      - Bird
+      - Cricket
+      - Whale
+      - White Noise
+      - Pink Noise
+      - Fan
+      - Hairdryer
+      - Lullaby
+      - Piano
+      - Wind Chimes
+
+switch:
+  - platform: template
+    switches:
+      soulsens_alarm_4_onoff:
+        friendly_name: "Soulsens Alarm 4 OnOff"
+        value_template: >
+          {% set value = ('0x' ~ states('sensor.soulsens_dpid101')[48:50]) | int(base=16) %}
+          {% if value == 1 %}
+            on
+          {% elif value == 0 %}
+            off
+          {% endif %}
+        turn_on:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 101
+            dptype: 0
+            dpdata: >
+              {{ states('sensor.soulsens_dpid101')[0:48] ~ '01' ~ states('sensor.soulsens_dpid101')[50:64] }}
+        turn_off:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 101
+            dptype: 0
+            dpdata: >
+              {{ states('sensor.soulsens_dpid101')[0:48] ~ '00' ~ states('sensor.soulsens_dpid101')[50:64] }}
+      # Alarm Day of The Week Template Switches
+      soulsens_alarm_4_sunday:
+        friendly_name: "Soulsens Alarm 4 Sunday"
+        value_template: >
+          {% set value = (((states('sensor.soulsens_alarm_4_days')[1:-1].split(','))[0])|int) %}
+          {% if value == 1 %}
+            on
+          {% elif value == 0 %}
+            off
+          {% endif %}
+        turn_on:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 101
+            dptype: 0
+            dpdata: >
+              {% set pre = states('sensor.soulsens_dpid101')[0:56] %}
+              {% set post = states('sensor.soulsens_dpid101')[58:64] %}
+              {% set value = states('sensor.soulsens_alarm_4_days')[1:-1].split(',') %}
+              {% set sun = 1 | int %}
+              {% set mon = value[1] | int %}
+              {% set tue = value[2] | int %}
+              {% set wed = value[3] | int %}
+              {% set thu = value[4] | int %}
+              {% set fri = value[5] | int %}
+              {% set sat = value[6] | int %}
+              {% set this = '%02X' % (64*sun+32*mon+16*tue+8*wed+4*thu+2*fri+1*sat) %}
+              {{ pre ~ this ~ post }}
+        turn_off:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 101
+            dptype: 0
+            dpdata: >
+              {% set pre = states('sensor.soulsens_dpid101')[0:56] %}
+              {% set post = states('sensor.soulsens_dpid101')[58:64] %}
+              {% set value = states('sensor.soulsens_alarm_4_days')[1:-1].split(',') %}
+              {% set sun = 0 | int %}
+              {% set mon = value[1] | int %}
+              {% set tue = value[2] | int %}
+              {% set wed = value[3] | int %}
+              {% set thu = value[4] | int %}
+              {% set fri = value[5] | int %}
+              {% set sat = value[6] | int %}
+              {% set this = '%02X' % (64*sun+32*mon+16*tue+8*wed+4*thu+2*fri+1*sat) %}
+              {{ pre ~ this ~ post }}
+      soulsens_alarm_4_monday:
+        friendly_name: "Soulsens Alarm 4 Monday"
+        value_template: >
+          {% set value = (((states('sensor.soulsens_alarm_4_days')[1:-1].split(','))[1])|int) %}
+          {% if value == 1 %}
+            on
+          {% elif value == 0 %}
+            off
+          {% endif %}
+        turn_on:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 101
+            dptype: 0
+            dpdata: >
+              {% set pre = states('sensor.soulsens_dpid101')[0:56] %}
+              {% set post = states('sensor.soulsens_dpid101')[58:64] %}
+              {% set value = states('sensor.soulsens_alarm_4_days')[1:-1].split(',') %}
+              {% set sun = value[0] | int %}
+              {% set mon = 1 | int %}
+              {% set tue = value[2] | int %}
+              {% set wed = value[3] | int %}
+              {% set thu = value[4] | int %}
+              {% set fri = value[5] | int %}
+              {% set sat = value[6] | int %}
+              {% set this = '%02X' % (64*sun+32*mon+16*tue+8*wed+4*thu+2*fri+1*sat) %}
+              {{ pre ~ this ~ post }}
+        turn_off:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 101
+            dptype: 0
+            dpdata: >
+              {% set pre = states('sensor.soulsens_dpid101')[0:56] %}
+              {% set post = states('sensor.soulsens_dpid101')[58:64] %}
+              {% set value = states('sensor.soulsens_alarm_4_days')[1:-1].split(',') %}
+              {% set sun = value[0] | int %}
+              {% set mon = 0 | int %}
+              {% set tue = value[2] | int %}
+              {% set wed = value[3] | int %}
+              {% set thu = value[4] | int %}
+              {% set fri = value[5] | int %}
+              {% set sat = value[6] | int %}
+              {% set this = '%02X' % (64*sun+32*mon+16*tue+8*wed+4*thu+2*fri+1*sat) %}
+              {{ pre ~ this ~ post }}
+      soulsens_alarm_4_tuesday:
+        friendly_name: "Soulsens Alarm 4 Tuesday"
+        value_template: >
+          {% set value = (((states('sensor.soulsens_alarm_4_days')[1:-1].split(','))[2])|int) %}
+          {% if value == 1 %}
+            on
+          {% elif value == 0 %}
+            off
+          {% endif %}
+        turn_on:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 101
+            dptype: 0
+            dpdata: >
+              {% set pre = states('sensor.soulsens_dpid101')[0:56] %}
+              {% set post = states('sensor.soulsens_dpid101')[58:64] %}
+              {% set value = states('sensor.soulsens_alarm_4_days')[1:-1].split(',') %}
+              {% set sun = value[0] | int %}
+              {% set mon = value[1] | int %}
+              {% set tue = 1 | int %}
+              {% set wed = value[3] | int %}
+              {% set thu = value[4] | int %}
+              {% set fri = value[5] | int %}
+              {% set sat = value[6] | int %}
+              {% set this = '%02X' % (64*sun+32*mon+16*tue+8*wed+4*thu+2*fri+1*sat) %}
+              {{ pre ~ this ~ post }}
+        turn_off:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 101
+            dptype: 0
+            dpdata: >
+              {% set pre = states('sensor.soulsens_dpid101')[0:56] %}
+              {% set post = states('sensor.soulsens_dpid101')[58:64] %}
+              {% set value = states('sensor.soulsens_alarm_4_days')[1:-1].split(',') %}
+              {% set sun = value[0] | int %}
+              {% set mon = value[1] | int %}
+              {% set tue = 0 | int %}
+              {% set wed = value[3] | int %}
+              {% set thu = value[4] | int %}
+              {% set fri = value[5] | int %}
+              {% set sat = value[6] | int %}
+              {% set this = '%02X' % (64*sun+32*mon+16*tue+8*wed+4*thu+2*fri+1*sat) %}
+              {{ pre ~ this ~ post }}
+      soulsens_alarm_4_wednesday:
+        friendly_name: "Soulsens Alarm 4 Wednesday"
+        value_template: >
+          {% set value = (((states('sensor.soulsens_alarm_4_days')[1:-1].split(','))[3])|int) %}
+          {% if value == 1 %}
+            on
+          {% elif value == 0 %}
+            off
+          {% endif %}
+        turn_on:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 101
+            dptype: 0
+            dpdata: >
+              {% set pre = states('sensor.soulsens_dpid101')[0:56] %}
+              {% set post = states('sensor.soulsens_dpid101')[58:64] %}
+              {% set value = states('sensor.soulsens_alarm_4_days')[1:-1].split(',') %}
+              {% set sun = value[0] | int %}
+              {% set mon = value[1] | int %}
+              {% set tue = value[2] | int %}
+              {% set wed = 1 | int %}
+              {% set thu = value[4] | int %}
+              {% set fri = value[5] | int %}
+              {% set sat = value[6] | int %}
+              {% set this = '%02X' % (64*sun+32*mon+16*tue+8*wed+4*thu+2*fri+1*sat) %}
+              {{ pre ~ this ~ post }}
+        turn_off:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 101
+            dptype: 0
+            dpdata: >
+              {% set pre = states('sensor.soulsens_dpid101')[0:56] %}
+              {% set post = states('sensor.soulsens_dpid101')[58:64] %}
+              {% set value = states('sensor.soulsens_alarm_4_days')[1:-1].split(',') %}
+              {% set sun = value[0] | int %}
+              {% set mon = value[1] | int %}
+              {% set tue = value[2] | int %}
+              {% set wed = 0 | int %}
+              {% set thu = value[4] | int %}
+              {% set fri = value[5] | int %}
+              {% set sat = value[6] | int %}
+              {% set this = '%02X' % (64*sun+32*mon+16*tue+8*wed+4*thu+2*fri+1*sat) %}
+              {{ pre ~ this ~ post }}
+      soulsens_alarm_4_thursday:
+        friendly_name: "Soulsens Alarm 4 Thursday"
+        value_template: >
+          {% set value = (((states('sensor.soulsens_alarm_4_days')[1:-1].split(','))[4])|int) %}
+          {% if value == 1 %}
+            on
+          {% elif value == 0 %}
+            off
+          {% endif %}
+        turn_on:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 101
+            dptype: 0
+            dpdata: >
+              {% set pre = states('sensor.soulsens_dpid101')[0:56] %}
+              {% set post = states('sensor.soulsens_dpid101')[58:64] %}
+              {% set value = states('sensor.soulsens_alarm_4_days')[1:-1].split(',') %}
+              {% set sun = value[0] | int %}
+              {% set mon = value[1] | int %}
+              {% set tue = value[2] | int %}
+              {% set wed = value[3] | int %}
+              {% set thu = 1 | int %}
+              {% set fri = value[5] | int %}
+              {% set sat = value[6] | int %}
+              {% set this = '%02X' % (64*sun+32*mon+16*tue+8*wed+4*thu+2*fri+1*sat) %}
+              {{ pre ~ this ~ post }}
+        turn_off:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 101
+            dptype: 0
+            dpdata: >
+              {% set pre = states('sensor.soulsens_dpid101')[0:56] %}
+              {% set post = states('sensor.soulsens_dpid101')[58:64] %}
+              {% set value = states('sensor.soulsens_alarm_4_days')[1:-1].split(',') %}
+              {% set sun = value[0] | int %}
+              {% set mon = value[1] | int %}
+              {% set tue = value[2] | int %}
+              {% set wed = value[3] | int %}
+              {% set thu = 0 | int %}
+              {% set fri = value[5] | int %}
+              {% set sat = value[6] | int %}
+              {% set this = '%02X' % (64*sun+32*mon+16*tue+8*wed+4*thu+2*fri+1*sat) %}
+              {{ pre ~ this ~ post }}
+      soulsens_alarm_4_friday:
+        friendly_name: "Soulsens Alarm 4 Friday"
+        value_template: >
+          {% set value = (((states('sensor.soulsens_alarm_4_days')[1:-1].split(','))[5])|int) %}
+          {% if value == 1 %}
+            on
+          {% elif value == 0 %}
+            off
+          {% endif %}
+        turn_on:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 101
+            dptype: 0
+            dpdata: >
+              {% set pre = states('sensor.soulsens_dpid101')[0:56] %}
+              {% set post = states('sensor.soulsens_dpid101')[58:64] %}
+              {% set value = states('sensor.soulsens_alarm_4_days')[1:-1].split(',') %}
+              {% set sun = value[0] | int %}
+              {% set mon = value[1] | int %}
+              {% set tue = value[2] | int %}
+              {% set wed = value[3] | int %}
+              {% set thu = value[4] | int %}
+              {% set fri = 1 | int %}
+              {% set sat = value[6] | int %}
+              {% set this = '%02X' % (64*sun+32*mon+16*tue+8*wed+4*thu+2*fri+1*sat) %}
+              {{ pre ~ this ~ post }}
+        turn_off:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 101
+            dptype: 0
+            dpdata: >
+              {% set pre = states('sensor.soulsens_dpid101')[0:56] %}
+              {% set post = states('sensor.soulsens_dpid101')[58:64] %}
+              {% set value = states('sensor.soulsens_alarm_4_days')[1:-1].split(',') %}
+              {% set sun = value[0] | int %}
+              {% set mon = value[1] | int %}
+              {% set tue = value[2] | int %}
+              {% set wed = value[3] | int %}
+              {% set thu = value[4] | int %}
+              {% set fri = 0 | int %}
+              {% set sat = value[6] | int %}
+              {% set this = '%02X' % (64*sun+32*mon+16*tue+8*wed+4*thu+2*fri+1*sat) %}
+              {{ pre ~ this ~ post }}
+      soulsens_alarm_4_saturday:
+        friendly_name: "Soulsens Alarm 4 Saturday"
+        value_template: >
+          {% set value = (((states('sensor.soulsens_alarm_4_days')[1:-1].split(','))[6])|int) %}
+          {% if value == 1 %}
+            on
+          {% elif value == 0 %}
+            off
+          {% endif %}
+        turn_on:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 101
+            dptype: 0
+            dpdata: >
+              {% set pre = states('sensor.soulsens_dpid101')[0:56] %}
+              {% set post = states('sensor.soulsens_dpid101')[58:64] %}
+              {% set value = states('sensor.soulsens_alarm_4_days')[1:-1].split(',') %}
+              {% set sun = value[0] | int %}
+              {% set mon = value[1] | int %}
+              {% set tue = value[2] | int %}
+              {% set wed = value[3] | int %}
+              {% set thu = value[4] | int %}
+              {% set fri = value[5] | int %}
+              {% set sat = 1 | int %}
+              {% set this = '%02X' % (64*sun+32*mon+16*tue+8*wed+4*thu+2*fri+1*sat) %}
+              {{ pre ~ this ~ post }}
+        turn_off:
+          service: script.tuya_send
+          data:
+            topic: your_topic
+            dpid: 101
+            dptype: 0
+            dpdata: >
+              {% set pre = states('sensor.soulsens_dpid101')[0:56] %}
+              {% set post = states('sensor.soulsens_dpid101')[58:64] %}
+              {% set value = states('sensor.soulsens_alarm_4_days')[1:-1].split(',') %}
+              {% set sun = value[0] | int %}
+              {% set mon = value[1] | int %}
+              {% set tue = value[2] | int %}
+              {% set wed = value[3] | int %}
+              {% set thu = value[4] | int %}
+              {% set fri = value[5] | int %}
+              {% set sat = 0 | int %}
+              {% set this = '%02X' % (64*sun+32*mon+16*tue+8*wed+4*thu+2*fri+1*sat) %}
+              {{ pre ~ this ~ post }}

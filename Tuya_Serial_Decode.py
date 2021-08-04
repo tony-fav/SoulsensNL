@@ -36,9 +36,9 @@ while 1:
             tuya_comm.append(ord(com))
             tuya_comm.append(ord(comm_len1))
             tuya_comm.append(ord(comm_len2))
-            bits = ser.read(comm_len)
-            for b in bits:
-                tuya_comm.append(ord(b))
+            for n in range(comm_len):
+                bit = ser.read()
+                tuya_comm.append(ord(bit))
             chk = ser.read()
             tuya_comm.append(ord(chk))
 
@@ -54,20 +54,40 @@ while 1:
                 else:
                     ser.write(bytearray.fromhex('55AA030000010104'))
             elif tuya_comm[3] == ord(b'\x01'): 
-                print('Query Product Info') 
-                # ser.write(bytearray.fromhex('55AA0301000003'))
-                # ser.write(bytearray.fromhex('55AA0307000F7100000B0100110001140000000A01C6'))
-                # ser.write(bytearray.fromhex('55AA03070007700000030105018A'))
-                # ser.write(bytearray.fromhex('55AA030700066F0000021E009E'))
-                # ser.write(bytearray.fromhex('55AA03070008680000040011060094'))
-                # ser.write(bytearray.fromhex('55AA0307000F6700000B00010A350012005A00110148'))
-                # ser.write(bytearray.fromhex('55AA030700056B010001017C'))
-                # ser.write(bytearray.fromhex('55AA0307000569040001017D'))
-            elif tuya_comm[3] == ord(b'\x02'): print('Query Working Mode')
-            elif tuya_comm[3] == ord(b'\x03'): print('Network Status')
-            elif tuya_comm[3] == ord(b'\x08'): print('Query Status') 
-            elif tuya_comm[3] == ord(b'\x1c'): print('Send Local Time')
+                print('Query Product Info')
+                # got this by sending "SerialSend5 55aa0001000000" with  "Weblog 2"
+                # {"p":"ta9o0ngbphd4kpo2","v":"1.1.2","m":0}
+                ser.write(bytearray.fromhex('55AA0301002A7B2270223A227461396F306E6762706864346B706F32222C2276223A22312E312E32222C226D223A307DC2'))
+            elif tuya_comm[3] == ord(b'\x02'): 
+                print('Query Working Mode')
+                ser.write(bytearray.fromhex('55AA0302000004'))
+            elif tuya_comm[3] == ord(b'\x03'): 
+                print('Network Status')
+                ser.write(bytearray.fromhex('55AA0303000005'))
+            elif tuya_comm[3] == ord(b'\x08'): 
+                print('Query Status') 
+                ser.write(bytearray.fromhex('55AA0307000F7100000B0100110001140000000A01C6'))
+                ser.write(bytearray.fromhex('55AA03070007700000030105018A'))
+                ser.write(bytearray.fromhex('55AA030700066F0000021E009E'))
+                ser.write(bytearray.fromhex('55AA03070008680000040011060094'))
+                ser.write(bytearray.fromhex('55AA0307000F6700000B00010A350012005A00110148'))
+                ser.write(bytearray.fromhex('55AA030700056B010001017C'))
+                ser.write(bytearray.fromhex('55AA0307000569040001017D'))
+            elif tuya_comm[3] == ord(b'\x1c'): 
+                print('Send Local Time')
+                ser.write(bytearray.fromhex('55AA001C0008011508031731020290'))
             elif tuya_comm[3] == ord(b'\x06'):
+                ts_ack = list(ts[:])
+                ts_ack[5] = '3'
+                ts_ack[7] = '7'
+                chk1 = ts_ack[-2]
+                chk2 = ts_ack[-1]
+                chk = '%02X' % ((int.from_bytes(bytearray.fromhex(chk1+chk2), byteorder='big') + 4) % 256)
+                ts_ack[-2] = chk[0]
+                ts_ack[-1] = chk[1]
+                ser.write(bytearray.fromhex(''.join(ts_ack)))
+
+                # need to reply with ack
                 print('Data Unit')
                 data_len = int.from_bytes(tuya_comm[4:6], 'big')
                 print('  Data Length: %d' % data_len)

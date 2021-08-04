@@ -2,25 +2,30 @@ views:
   - title: Soulsens
     badges: []
     cards:
-      - type: horizontal-stack
-        title: Light Settings
-        cards:
-          - type: light
-            entity: light.soulsens_nl_white
-            name: White
-          - type: light
-            entity: light.soulsens_nl_color
-            name: Color
-          - type: light
-            entity: light.soulsens_nl_effect
-            name: Effect
-          - type: light
-            entity: light.soulsens_sound
-            name: Sound
       - type: vertical-stack
-        title: Sleep Settings
         cards:
           - type: horizontal-stack
+            title: Standard Operation
+            cards:
+              - type: light
+                entity: light.soulsens_nl_white
+                name: White
+              - type: light
+                entity: light.soulsens_nl_color
+                name: Color
+              - type: light
+                entity: light.soulsens_nl_effect
+                name: Effect
+              - type: light
+                entity: light.soulsens_sound
+                name: Sound
+          - type: entities
+            entities:
+              - entity: input_number.soulsens_sound_timer
+      - type: vertical-stack
+        cards:
+          - type: horizontal-stack
+            title: Sleep Settings
             cards:
               - type: light
                 entity: light.soulsens_sleep_white
@@ -41,25 +46,130 @@ views:
             entities:
               - entity: input_number.soulsens_sleep_time_set
       - type: entities
-        title: DPIDs
         entities:
-          - entity: sensor.soulsens_dpid20
-            name: Device On/Off
-          - entity: sensor.soulsens_dpid101
-            name: Four Alarms
-          - entity: sensor.soulsens_dpid102
-            name: Sleep Mode
-          - entity: sensor.soulsens_dpid103
-            name: Light
-          - entity: sensor.soulsens_dpid104
+          - entity: switch.soulsens_alarm_1_onoff
+            name: On/Off
+          - entity: input_number.soulsens_alarm_1_hours
+            name: Hours
+          - entity: input_number.soulsens_alarm_1_minutes
+            name: Minutes
+          - entity: switch.soulsens_alarm_1_sunday
+            name: Sunday
+          - entity: switch.soulsens_alarm_1_monday
+            name: Monday
+          - entity: switch.soulsens_alarm_1_tuesday
+            name: Tuesday
+          - entity: switch.soulsens_alarm_1_wednesday
+            name: Wednesday
+          - entity: switch.soulsens_alarm_1_thursday
+            name: Thursday
+          - entity: switch.soulsens_alarm_1_friday
+            name: Friday
+          - entity: switch.soulsens_alarm_1_saturday
+            name: Saturday
+          - entity: input_select.soulsens_alarm_1_sound
             name: Sound
-          - entity: sensor.soulsens_dpid105
-            name: Time Format (0=12,1=24)
-          - entity: sensor.soulsens_dpid107
-            name: Manual (0) or Auto (1) Time
-          - entity: sensor.soulsens_dpid111
-            name: Sleep Time Setting
-          - entity: sensor.soulsens_dpid112
-            name: Sleep Sound Settings
-          - entity: sensor.soulsens_dpid113
-            name: Sleep Lights Settings
+          - entity: input_number.soulsens_alarm_1_volume
+            name: Volume
+          - entity: input_number.soulsens_alarm_1_brightness
+            name: Brightness
+          - entity: input_number.soulsens_alarm_1_snooze_time
+            name: Snooze Time
+        title: Alarm 1 Settings
+        show_header_toggle: false
+      - type: entities
+        entities:
+          - entity: switch.soulsens_alarm_2_onoff
+            name: On/Off
+          - entity: input_number.soulsens_alarm_2_hours
+            name: Hours
+          - entity: input_number.soulsens_alarm_2_minutes
+            name: Minutes
+          - entity: switch.soulsens_alarm_2_sunday
+            name: Sunday
+          - entity: switch.soulsens_alarm_2_monday
+            name: Monday
+          - entity: switch.soulsens_alarm_2_tuesday
+            name: Tuesday
+          - entity: switch.soulsens_alarm_2_wednesday
+            name: Wednesday
+          - entity: switch.soulsens_alarm_2_thursday
+            name: Thursday
+          - entity: switch.soulsens_alarm_2_friday
+            name: Friday
+          - entity: switch.soulsens_alarm_2_saturday
+            name: Saturday
+          - entity: input_select.soulsens_alarm_2_sound
+            name: Sound
+          - entity: input_number.soulsens_alarm_2_volume
+            name: Volume
+          - entity: input_number.soulsens_alarm_2_brightness
+            name: Brightness
+          - entity: input_number.soulsens_alarm_2_snooze_time
+            name: Snooze Time
+        title: Alarm 2 Settings
+        show_header_toggle: false
+      - type: entities
+        entities:
+          - entity: switch.soulsens_alarm_3_onoff
+            name: On/Off
+          - entity: input_number.soulsens_alarm_3_hours
+            name: Hours
+          - entity: input_number.soulsens_alarm_3_minutes
+            name: Minutes
+          - entity: switch.soulsens_alarm_3_sunday
+            name: Sunday
+          - entity: switch.soulsens_alarm_3_monday
+            name: Monday
+          - entity: switch.soulsens_alarm_3_tuesday
+            name: Tuesday
+          - entity: switch.soulsens_alarm_3_wednesday
+            name: Wednesday
+          - entity: switch.soulsens_alarm_3_thursday
+            name: Thursday
+          - entity: switch.soulsens_alarm_3_friday
+            name: Friday
+          - entity: switch.soulsens_alarm_3_saturday
+            name: Saturday
+          - entity: input_select.soulsens_alarm_3_sound
+            name: Sound
+          - entity: input_number.soulsens_alarm_3_volume
+            name: Volume
+          - entity: input_number.soulsens_alarm_3_brightness
+            name: Brightness
+          - entity: input_number.soulsens_alarm_3_snooze_time
+            name: Snooze Time
+        title: Alarm 3 Settings
+        show_header_toggle: false
+      - type: entities
+        entities:
+          - entity: switch.soulsens_alarm_4_onoff
+            name: On/Off
+          - entity: input_number.soulsens_alarm_4_hours
+            name: Hours
+          - entity: input_number.soulsens_alarm_4_minutes
+            name: Minutes
+          - entity: switch.soulsens_alarm_4_sunday
+            name: Sunday
+          - entity: switch.soulsens_alarm_4_monday
+            name: Monday
+          - entity: switch.soulsens_alarm_4_tuesday
+            name: Tuesday
+          - entity: switch.soulsens_alarm_4_wednesday
+            name: Wednesday
+          - entity: switch.soulsens_alarm_4_thursday
+            name: Thursday
+          - entity: switch.soulsens_alarm_4_friday
+            name: Friday
+          - entity: switch.soulsens_alarm_4_saturday
+            name: Saturday
+          - entity: input_select.soulsens_alarm_4_sound
+            name: Sound
+          - entity: input_number.soulsens_alarm_4_volume
+            name: Volume
+          - entity: input_number.soulsens_alarm_4_brightness
+            name: Brightness
+          - entity: input_number.soulsens_alarm_4_snooze_time
+            name: Snooze Time
+        title: Alarm 4 Settings
+        show_header_toggle: false
